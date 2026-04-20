@@ -2,747 +2,1578 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Yuanta Securities - Market Share Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <style>
-  :root{
-    --navy:#0a2756; --navy2:#143069; --amber:#f59e0b; --amber2:#fbbf24;
-    --gray:#f3f4f6; --card:#ffffff; --border:#e5e7eb; --text:#1f2937;
-    --muted:#6b7280; --pos:#16a34a; --neg:#dc2626; --blue:#3b82f6; --bluebar:#60a5fa;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:'Segoe UI',Arial,sans-serif;background:#eef0f3;color:var(--text);font-size:11px;padding:6px}
-  .header{background:var(--navy);color:#fff;padding:8px 14px;font-weight:600;font-size:13px;letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center}
-  .header .accent{height:3px;background:var(--amber);width:60px;border-radius:2px;display:inline-block;margin-left:10px}
-  .filter-bar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;background:#fff;padding:8px 10px;border:1px solid var(--border);border-top:none}
-  .f{display:flex;flex-direction:column}
-  .f label{font-size:10px;color:var(--muted);margin-bottom:3px;font-weight:600}
-  .f select{padding:4px 6px;border:1px solid #cbd5e1;border-radius:3px;background:#fff;font-size:11px;color:var(--text)}
-  .section-title{background:#dfe3ea;padding:5px 10px;font-weight:700;font-size:12px;color:var(--navy);margin-top:8px;border-left:4px solid var(--amber)}
-  .section-title em{color:var(--muted);font-weight:500;font-style:italic;margin-left:6px;font-size:11px}
-  .row{display:grid;gap:6px;margin-top:6px}
-  .card{background:#fff;border:1px solid var(--border);padding:8px 10px;border-radius:2px;position:relative}
-  .card-title{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:1px}
-  .card-sub{font-size:9.5px;color:var(--muted);margin-bottom:4px;font-style:italic}
-  .kpi-val{font-size:26px;font-weight:800;color:var(--navy);line-height:1.1}
-  .kpi-val.amber{color:var(--amber)}
-  .kpi-val.pos{color:var(--pos)}
-  .kpi-val.neg{color:var(--neg)}
-  .kpi-cmp{font-size:10px;color:var(--muted);margin-top:3px}
-  .kpi-cmp .up{color:var(--pos);font-weight:600}
-  .kpi-cmp .down{color:var(--neg);font-weight:600}
-  table{width:100%;border-collapse:collapse;font-size:10px}
-  th{background:#f1f4f8;text-align:left;padding:4px 6px;border-bottom:1px solid var(--border);font-weight:700;color:var(--navy);font-size:10px}
-  td{padding:3px 6px;border-bottom:1px solid #f3f4f6;color:var(--text)}
-  td.num{text-align:right;font-variant-numeric:tabular-nums}
-  .arrow-up{color:var(--pos);font-weight:700}
-  .arrow-dn{color:var(--neg);font-weight:700}
-  .divider{height:1px;background:var(--border);margin:4px 0}
-  .text-right{text-align:right}
-  .small{font-size:9.5px;color:var(--muted)}
-  .label-strong{font-weight:700}
-  .chart-wrap{position:relative;width:100%}
-  .chart-wrap.tall{height:260px}
-  .chart-wrap.med{height:150px}
-  .chart-wrap.sm{height:120px}
-  .kpi-card{min-height:96px}
-  .row-1{grid-template-columns:repeat(4,1fr)}
-  .row-2{grid-template-columns:1.2fr 1fr 2fr}
-  .row-2 .buy-sell{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-  .buyside{border-top:3px solid #2563eb}
-  .sellside{border-top:3px solid #dc2626}
-  .side-title{font-weight:800;color:var(--navy);font-size:11px;margin-bottom:6px;letter-spacing:.5px}
-  .side-title.buy{color:#1d4ed8}
-  .side-title.sell{color:#b91c1c}
-  .mini-kpi{display:flex;flex-direction:column;margin-bottom:4px}
-  .mini-kpi .v{font-size:20px;font-weight:800;color:var(--navy)}
-  .mini-kpi .l{font-size:9.5px;color:var(--muted)}
-  .active-box{display:grid;grid-template-columns:1fr;gap:4px}
-  .hedanhgia{background:#fff;border:1px solid var(--border);padding:18px 12px;font-size:11px;color:var(--muted);font-style:italic;min-height:40px}
-  .tbl-matrix th,.tbl-matrix td{text-align:center;padding:3px 4px}
-  .tbl-matrix th:first-child,.tbl-matrix td:first-child{text-align:left}
-  .heat{background:linear-gradient(to right,rgba(37,99,235,var(--a,.1)),rgba(37,99,235,var(--a,.1)))}
-  .bar-cell{position:relative}
-  .bar-inner{height:10px;background:var(--bluebar);border-radius:1px;display:inline-block;vertical-align:middle}
-  .bar-row{display:grid;grid-template-columns:140px 1fr 96px;gap:6px;align-items:center;font-size:10px;padding:1px 0}
-  .bar-row .lbl{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bar-row .val{text-align:right;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
-  .bar-row .val-line{display:flex;align-items:center;justify-content:flex-end;gap:4px;white-space:nowrap}
-  .bar-row .chg{font-size:9px;font-weight:700}
-  .bar-row .chg.up{color:var(--pos)}
-  .bar-row .chg.down{color:var(--neg)}
-  .bar-row .chg.flat{color:var(--muted)}
-  .bar-row .bar{background:#eef2f7;height:12px;border-radius:1px;overflow:hidden}
-  .bar-row .bar>div{height:100%;background:var(--bluebar)}
-  .disclaimer{background:#1f2f46;border:1px solid #2b3f5f;border-left:4px solid #f59e0b;padding:8px 10px;margin-top:8px;font-size:10.5px;color:#e5e7eb}
-  .disclaimer b{color:#f59e0b}
-  .row-cust{grid-template-columns:repeat(5,1fr)}
-  .row-active{grid-template-columns:2fr 1fr}
-  .row-analytics{grid-template-columns:1.4fr 1fr}
-  .row-donutbar{grid-template-columns:1fr 1fr 1fr}
-  .row-segments{grid-template-columns:1fr 1.1fr 1.3fr}
-  .row-nav{grid-template-columns:1fr 1.3fr}
-  .row-broker{grid-template-columns:1fr 1fr}
-  .legend-inline{display:flex;gap:10px;align-items:center;font-size:9.5px;color:var(--muted);margin-bottom:2px}
-  .dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:3px;vertical-align:middle}
-  .tag-amber{display:inline-block;background:var(--amber);color:#fff;font-size:9px;padding:1px 4px;border-radius:2px;margin-left:4px}
-  .subtle-row td{color:#9ca3af}
+/* ============================================================
+   YUANTA SECURITIES — MARKET SHARE BI DASHBOARD
+   Theme: Navy header + Amber accent + White/Gray background
+   Layout: 12-column grid, responsive, vertical scroll only
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;overflow-x:hidden;max-width:100vw}
+body{
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  background:#f3f4f6;
+  color:#111827;
+  font-size:12px;
+  line-height:1.35;
+}
+
+/* ---------- HEADER ---------- */
+.app-header{
+  background:#1e3a5f;
+  color:#fff;
+  padding:10px 18px;
+  font-size:15px;
+  font-weight:700;
+  border-bottom:3px solid #f59e0b;
+  position:sticky;top:0;z-index:20;
+}
+
+/* ---------- FILTER BAR (reusable block) ---------- */
+/* ==== FILTER BAR BLOCK — REUSABLE FOR ANY DASHBOARD ====
+   Contains: Chọn Năm, Tìm kiếm Ngày/Tuần/Tháng/Quý,
+             Tìm kiếm chi tiết, Branch Name, Trader Name
+============================================================ */
+.filter-bar{
+  background:#fff;
+  border-bottom:1px solid #e5e7eb;
+  padding:8px 14px;
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:10px;
+  align-items:end;
+  position:sticky;top:38px;z-index:19;
+}
+.filter-item{display:flex;flex-direction:column;min-width:0}
+.filter-item label{
+  font-size:10.5px;color:#6b7280;margin-bottom:3px;font-weight:600;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.filter-item select,
+.filter-item .multi-btn{
+  padding:5px 8px;
+  border:1px solid #d1d5db;
+  border-radius:4px;
+  background:#fff;
+  font-size:11.5px;
+  color:#111827;
+  min-height:28px;
+  width:100%;
+  cursor:pointer;
+}
+.filter-item select:focus,.multi-btn:focus{outline:2px solid #f59e0b;outline-offset:-2px}
+.multi-btn{text-align:left;position:relative;display:flex;justify-content:space-between;align-items:center}
+.multi-btn::after{content:"▾";color:#6b7280;margin-left:6px}
+.multi-panel{
+  position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid #d1d5db;
+  border-radius:4px;padding:6px;margin-top:2px;box-shadow:0 6px 16px rgba(0,0,0,.1);
+  max-height:220px;overflow:auto;z-index:30;display:none;
+}
+.multi-wrap{position:relative}
+.multi-wrap.open .multi-panel{display:block}
+.multi-panel label{display:flex;align-items:center;gap:6px;padding:3px 2px;font-size:11.5px;color:#111827;cursor:pointer;font-weight:400}
+.multi-panel label:hover{background:#f3f4f6}
+.multi-panel input[type=checkbox]{margin:0}
+.multi-sep{height:1px;background:#e5e7eb;margin:4px 0}
+
+/* ---------- DASHBOARD LAYOUT ---------- */
+.dashboard{padding:10px 14px 30px;display:flex;flex-direction:column;gap:10px;max-width:100%}
+.row{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:10px}
+.card,.panel{
+  background:#fff;border:1px solid #e5e7eb;border-radius:6px;
+  padding:10px 12px;min-width:0;overflow:hidden;
+}
+.panel h3{
+  margin:0 0 6px;font-size:12.5px;font-weight:700;color:#0f2847;
+}
+.panel .subtitle{font-size:10.5px;color:#6b7280;margin-bottom:8px;line-height:1.3}
+
+/* Section banner */
+.section-banner{
+  grid-column:1/-1;
+  background:#eef2f7;border-left:4px solid #f59e0b;
+  padding:6px 12px;font-weight:700;color:#0f2847;font-size:12.5px;border-radius:4px;
+}
+.section-sub{
+  grid-column:1/-1;
+  color:#6b7280;font-size:11px;padding:0 4px;margin-top:-4px;font-style:italic
+}
+
+/* ---------- KPI CARDS ---------- */
+.kpi{position:relative;min-height:96px;display:flex;flex-direction:column;justify-content:space-between}
+.kpi .title{font-size:11px;color:#0f2847;font-weight:700}
+.kpi .desc{font-size:10px;color:#6b7280;margin-top:1px}
+.kpi .big{
+  font-size:28px;font-weight:800;margin:4px 0 2px;color:#111827;
+  display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;line-height:1
+}
+.kpi .big .unit{font-size:14px;font-weight:700}
+.kpi .big.pos{color:#16a34a}
+.kpi .big.neg{color:#dc2626}
+.kpi .prev{font-size:10.5px;color:#6b7280}
+.kpi .chg{font-weight:700}
+/* %Change coloring — applied to .chg, .hbar-chg, and table cells */
+.up,     .chg.up,     .hbar-chg.up,     td.num.up     {color:#16a34a !important}
+.down,   .chg.down,   .hbar-chg.down,   td.num.down   {color:#dc2626 !important}
+.zero,   .chg.zero,   .hbar-chg.zero,   td.num.zero   {color:#9ca3af !important}
+.pill{
+  display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;
+  background:#f3f4f6;color:#374151;font-weight:600;margin-right:6px
+}
+.buyside-hdr{background:#dbeafe;color:#1e40af;padding:3px 6px;border-radius:3px;font-size:10.5px;font-weight:700;display:inline-block;margin-bottom:4px}
+.sellside-hdr{background:#fde68a;color:#92400e;padding:3px 6px;border-radius:3px;font-size:10.5px;font-weight:700;display:inline-block;margin-bottom:4px}
+.kpi.subcard{min-height:70px}
+.kpi.subcard .big{font-size:20px}
+.kpi-group{display:flex;flex-direction:column;gap:6px}
+.kpi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.kpi-row .sub{background:#f9fafb;border:1px solid #e5e7eb;border-radius:4px;padding:6px 8px}
+.kpi-row .sub .lbl{font-size:10px;color:#6b7280}
+.kpi-row .sub .val{font-size:14px;font-weight:700;color:#111827}
+
+/* ---------- BAR CHARTS (native CSS horizontal) ---------- */
+.hbar-chart{display:flex;flex-direction:column;gap:5px;margin-top:4px}
+.hbar-row{display:grid;grid-template-columns:minmax(110px,1.6fr) 3fr auto auto;gap:6px;align-items:center;font-size:10.5px}
+.hbar-label{color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hbar-track{background:#f3f4f6;border-radius:2px;height:14px;position:relative;overflow:hidden}
+.hbar-fill{background:linear-gradient(90deg,#3b82f6,#60a5fa);height:100%;border-radius:2px}
+.hbar-fill.alt{background:linear-gradient(90deg,#1e3a5f,#3b82f6)}
+.hbar-value{font-weight:700;color:#111827;min-width:44px;text-align:right}
+.hbar-chg{font-weight:700;min-width:54px;text-align:right;white-space:nowrap}
+.hbar-value{white-space:nowrap}
+.hbar-row > *{min-width:0}
+.axis-row{display:grid;grid-template-columns:minmax(110px,1.6fr) 3fr auto auto;gap:6px;font-size:9.5px;color:#6b7280;margin-top:4px}
+.axis-ticks{display:flex;justify-content:space-between}
+
+/* ---------- TABLES (general + heatmap) ---------- */
+table.tbl{width:100%;border-collapse:collapse;font-size:10.5px;table-layout:auto}
+table.tbl th,table.tbl td{
+  border-bottom:1px solid #eef2f7;padding:4px 6px;text-align:left;vertical-align:middle;
+}
+table.tbl thead th{
+  background:#f3f4f6;color:#0f2847;font-weight:700;font-size:10px;
+  border-bottom:1px solid #d1d5db;position:sticky;top:0;
+}
+table.tbl tr:hover td{background:#fafbfc}
+table.tbl td.num, table.tbl th.num{text-align:right;font-variant-numeric:tabular-nums}
+table.tbl tr.totalrow td{font-weight:700;background:#f9fafb;border-top:1.5px solid #1e3a5f}
+.tbl-wrap{overflow:auto;max-width:100%}
+
+/* Heatmap table */
+table.heat{width:100%;border-collapse:collapse;font-size:10.5px}
+table.heat th,table.heat td{padding:4px 6px;text-align:center;border:1px solid #eef2f7;font-variant-numeric:tabular-nums}
+table.heat thead th{background:#f3f4f6;color:#0f2847;font-weight:700;font-size:10px}
+table.heat td.lbl{text-align:left;background:#fff;font-weight:600;color:#111827;white-space:nowrap}
+
+/* Donut */
+.donut-wrap{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  flex-wrap:wrap;
+}
+.donut-chart{
+  flex:0 0 140px;
+  width:140px;
+  height:140px;
+  position:relative;
+}
+.donut-legend{
+  flex:1 1 140px;
+  min-width:0;
+  display:flex;flex-direction:column;gap:8px;font-size:10.5px;
+}
+.donut-legend .lg{display:flex;align-items:flex-start;gap:6px;line-height:1.35}
+.donut-legend .sw{width:10px;height:10px;border-radius:2px;display:inline-block;margin-top:3px;flex-shrink:0}
+.donut-legend .lg b{display:block;margin-bottom:2px;color:#0f2847}
+@media (max-width:640px){
+  .donut-wrap{justify-content:center}
+  .donut-chart{flex-basis:150px;width:150px;height:150px}
+  .donut-legend{flex-basis:100%}
+}
+
+/* ---------- DISCLAIMER (from 004.Disclaimer.docx) ---------- */
+.disclaimer{
+  background:#1f2f46;
+  border:1px solid #2b3f5f;
+  border-left:4px solid #f59e0b;
+  padding:8px 10px;
+  margin-top:8px;
+  font-size:10.5px;
+  color:#e5e7eb;
+  border-radius:4px;
+}
+.disclaimer b{color:#f59e0b}
+
+/* ---------- Main combo chart container ---------- */
+.combo-wrap{position:relative;width:100%;height:320px}
+
+/* ---------- Evaluation placeholder ---------- */
+.eval-placeholder{
+  background:#fff8e6;border:1px dashed #f59e0b;border-radius:6px;
+  padding:14px;color:#92400e;font-size:11.5px;height:calc(100% - 0px);
+  display:flex;align-items:center;justify-content:center;text-align:center;min-height:120px;
+}
+
+/* ---------- Column spans ---------- */
+.c-12{grid-column:span 12}
+.c-9{grid-column:span 9}
+.c-8{grid-column:span 8}
+.c-7{grid-column:span 7}
+.c-6{grid-column:span 6}
+.c-5{grid-column:span 5}
+.c-4{grid-column:span 4}
+.c-3{grid-column:span 3}
+.c-2{grid-column:span 2}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px){
+  .c-8,.c-9,.c-7{grid-column:span 12}
+  .c-5,.c-6{grid-column:span 12}
+  .c-4{grid-column:span 6}
+  .c-3{grid-column:span 6}
+  .c-2{grid-column:span 6}
+  .filter-bar{grid-template-columns:repeat(2,1fr)}
+  .combo-wrap{height:280px}
+}
+@media (max-width: 640px){
+  .c-4,.c-3,.c-2{grid-column:span 12}
+  .filter-bar{grid-template-columns:1fr}
+  .kpi .big{font-size:22px}
+  .app-header{font-size:13px}
+  .kpi-row{grid-template-columns:1fr}
+}
+
+/* Scrollbar polish */
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:#94a3b8}
 </style>
 </head>
 <body>
 
-<div class="header">
-  <div>Yuanta Securities Company - Market Share <span class="accent"></span></div>
-  <div style="font-size:10px;opacity:.85;font-weight:400">BI Dashboard · Cập nhật: 14/04/2026</div>
-</div>
+<!-- HEADER -->
+<div class="app-header">Yuanta Securities Company - Market Share</div>
 
-<!-- FILTER BAR -->
-<div class="filter-bar">
-  <div class="f"><label>Chọn Năm</label>
-    <select id="fYear"><option>All</option><option>2026</option><option>2025</option><option>2024</option></select>
-  </div>
-  <div class="f"><label>Tìm kiếm theo Ngày/Tuần/Tháng/Quý/Năm</label>
-    <select id="fGran"><option>All</option><option>Ngày</option><option>Tuần</option><option>Tháng</option><option>Quý</option></select>
-  </div>
-  <div class="f"><label>Tìm kiếm chi tiết</label>
-    <select id="fDetail">
-      <option>All</option>
-      <option>Ngày 13/04/2026</option>
-      <option>Ngày 14/04/2026</option>
-      <option>Ngày 15/04/2026</option>
-      <option>Tuần 1 (1/3/2026 - 7/3/2026)</option>
-      <option>Tuần 2 (8/3/2026 - 15/3/2026)</option>
-      <option>Tháng 1</option>
-      <option>Tháng 2</option>
-      <option>Tháng 3</option>
-      <option>Tháng 4</option>
-      <option>Quý 1 (1/1/2026 - 31/3/2026)</option>
-      <option>Quý 2 (1/4/2026 - 30/6/2026)</option>
-      <option>Quý 3 (1/7/2026 - 30/9/2026)</option>
-      <option>Quý 4 (1/10/2026 - 31/12/2026)</option>
+<!-- =============================================================
+     FILTER BAR — REUSABLE ACROSS DASHBOARDS
+     Filters: Chọn Năm | Tìm kiếm Ngày/Tuần/Tháng/Quý |
+              Tìm kiếm chi tiết | Branch Name | Trader Name
+     Note: "Tất cả" means ALL (no filter applied).
+============================================================= -->
+<div class="filter-bar" id="filterBar">
+  <div class="filter-item">
+    <label>Chọn Năm</label>
+    <select id="f_year">
+      <option value="ALL" selected>Tất cả</option>
+      <option value="2026">2026</option>
+      <option value="2025">2025</option>
+      <option value="2024">2024</option>
     </select>
   </div>
-  <div class="f"><label>Branch Name</label>
-    <select id="fBranch"><option>All</option></select>
+  <div class="filter-item">
+    <label>Tìm kiếm theo Ngày/Tuần/Tháng/Quý</label>
+    <select id="f_grain">
+      <option value="ALL" selected>Tất cả</option>
+      <option value="Ngày">Ngày</option>
+      <option value="Tuần">Tuần</option>
+      <option value="Tháng">Tháng</option>
+      <option value="Quý">Quý</option>
+    </select>
   </div>
-  <div class="f"><label>Trader Name</label>
-    <select id="fTrader"><option>All</option></select>
+  <div class="filter-item multi-wrap" id="f_detail_wrap">
+    <label>Tìm kiếm chi tiết</label>
+    <button type="button" class="multi-btn" id="f_detail_btn"><span id="f_detail_lbl">Tất cả</span></button>
+    <div class="multi-panel" id="f_detail_panel"></div>
   </div>
-</div>
-
-<!-- ROW 1: Top KPI cards -->
-<div class="row row-1">
-  <div class="card kpi-card">
-    <div class="card-title">Market Share</div>
-    <div class="card-sub">Thị phần:</div>
-    <div class="kpi-val neg" id="kMS">0.26%<span style="font-size:12px">↓</span></div>
-    <div class="kpi-cmp">Previous: <span id="kMSPrev">0.33%</span> (<span class="down" id="kMSChg">-20.8%</span>)</div>
+  <div class="filter-item multi-wrap" id="f_branch_wrap">
+    <label>Branch Name</label>
+    <button type="button" class="multi-btn" id="f_branch_btn"><span id="f_branch_lbl">Tất cả</span></button>
+    <div class="multi-panel" id="f_branch_panel"></div>
   </div>
-  <div class="card kpi-card">
-    <div class="card-title">[YSVN] Trading Value</div>
-    <div class="card-sub">Giá trị giao dịch</div>
-    <div class="kpi-val neg" id="kYSVN">135bn<span style="font-size:12px">↓</span></div>
-    <div class="kpi-cmp">Previous: <span id="kYSVNPrev">163bn</span> (<span class="down" id="kYSVNChg">-16.98%</span>)</div>
-  </div>
-  <div class="card kpi-card">
-    <div class="card-title">[Market] Trading Value</div>
-    <div class="card-sub">Giá trị giao dịch thị trường</div>
-    <div class="kpi-val pos" id="kMKT">8,606bn<span style="font-size:12px">↑</span></div>
-    <div class="kpi-cmp">GTGD T-1: <span id="kMKTPrev">8,210bn</span> (<span class="up" id="kMKTChg">+4.82%</span>)</div>
-  </div>
-  <div class="card kpi-card">
-    <div class="card-title">Net Buy–Sell Stock Value</div>
-    <div class="card-sub">Tổng giá trị mua bán cổ phiếu RÒNG</div>
-    <div class="kpi-val neg" id="kNet">-8bn</div>
-    <div class="kpi-cmp">&nbsp;</div>
+  <div class="filter-item multi-wrap" id="f_trader_wrap">
+    <label>Trader Name</label>
+    <button type="button" class="multi-btn" id="f_trader_btn"><span id="f_trader_lbl">Tất cả</span></button>
+    <div class="multi-panel" id="f_trader_panel"></div>
   </div>
 </div>
 
-<!-- ROW 2: Active / Total Orders / BUY-SELL -->
-<div class="row row-2">
-  <div class="card">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div>
-        <div class="card-title">%Active Customers</div>
-        <div class="card-sub">Tỷ lệ khách hàng Active (có lệnh khớp)</div>
-        <div class="kpi-val amber" id="kActPct">0.33%</div>
+<!-- DASHBOARD BODY -->
+<div class="dashboard">
+
+<!-- =============== ROW 1 — TOP KPI CARDS =============== -->
+<div class="row">
+  <div class="card kpi c-3">
+    <div>
+      <div class="title">Market Share</div>
+      <div class="desc">Thị phần</div>
+    </div>
+    <div class="big" id="kpi_ms"><span>—</span></div>
+    <div class="prev">Previous: <span id="kpi_ms_prev">—</span> (<span id="kpi_ms_chg" class="chg">—</span>)</div>
+  </div>
+  <div class="card kpi c-3">
+    <div>
+      <div class="title">[YSVN] Trading Value</div>
+      <div class="desc">Giá trị giao dịch</div>
+    </div>
+    <div class="big" id="kpi_ys"><span>—</span><span class="unit">tỷ</span></div>
+    <div class="prev">Previous: <span id="kpi_ys_prev">—</span> tỷ (<span id="kpi_ys_chg" class="chg">—</span>)</div>
+  </div>
+  <div class="card kpi c-3">
+    <div>
+      <div class="title">[Market] Trading Value</div>
+      <div class="desc">Giá trị giao dịch thị trường</div>
+    </div>
+    <div class="big" id="kpi_mk"><span>—</span><span class="unit">tỷ</span></div>
+    <div class="prev">GTGD T-1: <span id="kpi_mk_prev">—</span> tỷ (<span id="kpi_mk_chg" class="chg">—</span>)</div>
+  </div>
+  <div class="card kpi c-3">
+    <div>
+      <div class="title">Net Buy–Sell Stock Value</div>
+      <div class="desc">Tổng giá trị mua bán cổ phiếu RÒNG</div>
+    </div>
+    <div class="big" id="kpi_net"><span>—</span><span class="unit">tỷ</span></div>
+    <div class="prev">%Change kỳ trước: <span id="kpi_net_chg" class="chg">—</span></div>
+  </div>
+</div>
+
+<!-- =============== ROW 2 — SECONDARY KPI CARDS (2 narrow + BUY + SELL) =============== -->
+<div class="row">
+  <div class="card kpi c-2">
+    <div>
+      <div class="title">%Active Customers</div>
+      <div class="desc">Tỷ lệ khách hàng Active (có lệnh khớp)</div>
+    </div>
+    <div class="big" id="kpi_active"><span>—</span></div>
+    <div class="prev">
+      <div><b id="kpi_active_n">—</b> #Active customers</div>
+      <div><b id="kpi_total_c">—</b> #Total Customers</div>
+    </div>
+  </div>
+  <div class="card kpi c-2">
+    <div>
+      <div class="title">%Buy Order/Total Orders</div>
+      <div class="desc">%Số lệnh mua / Tổng số lệnh</div>
+    </div>
+    <div class="big" id="kpi_buyratio"><span>—</span></div>
+    <div class="prev">
+      <div><b id="kpi_totorders">—</b> #Total Orders (Tổng lệnh đặt khớp)</div>
+      <div>%Value Change: <span id="kpi_buyratio_chg" class="chg">—</span></div>
+    </div>
+  </div>
+
+  <div class="card c-4">
+    <div class="buyside-hdr">BUY SIDE</div>
+    <div class="kpi-group">
+      <div class="kpi subcard" style="padding:0">
+        <div class="title">Total Buy Value (Tổng giá trị Mua cổ phiếu)</div>
+        <div class="big" id="kpi_buyval"><span>—</span><span class="unit">tỷ</span></div>
+        <div class="prev">%Change kỳ trước: <span id="kpi_buyval_chg" class="chg">—</span></div>
       </div>
-      <div style="display:flex;flex-direction:column;justify-content:flex-end;gap:2px">
-        <div><span class="kpi-val" style="font-size:16px" id="kActNum">385</span><div class="small">#Active customers</div></div>
-        <div><span class="kpi-val" style="font-size:16px" id="kTotCust">38,849</span><div class="small">#Total Customers</div></div>
+      <div class="kpi-row">
+        <div class="sub">
+          <div class="lbl">#Buy order customers</div>
+          <div class="val" id="kpi_buycust">—</div>
+          <div class="lbl">Số lượng Khách mua</div>
+        </div>
+        <div class="sub">
+          <div class="lbl">Total Buy Orders</div>
+          <div class="val" id="kpi_buyord">—</div>
+          <div class="lbl">Tổng lệnh đặt mua</div>
+        </div>
+        <div class="sub">
+          <div class="lbl">Avg / Buy Order</div>
+          <div class="val" id="kpi_buyavg">—</div>
+          <div class="lbl">(triệu VND)</div>
+        </div>
       </div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-title">Total Orders</div>
-    <div class="card-sub">Tổng lệnh đặt khớp</div>
-    <div class="kpi-val" id="kOrders" style="color:var(--blue)">3,279</div>
-    <div style="margin-top:8px"><span style="font-size:18px;font-weight:800;color:var(--navy)" id="kBuyPct">45%</span><div class="small">%Buy Orders/Total Orders</div></div>
-  </div>
-  <div class="card" style="padding:6px">
-    <div class="buy-sell">
-      <div class="card buyside" style="border:1px solid var(--border);border-top:3px solid #2563eb;padding:8px">
-        <div class="side-title buy">BUY SIDE</div>
-        <div class="mini-kpi">
-          <div class="v" id="kBuyVal" style="color:#1d4ed8">64bn</div>
-          <div class="l">Total Buy Value (Tổng giá trị Mua cổ phiếu)</div>
-        </div>
-        <div class="mini-kpi"><div class="v" style="font-size:15px" id="kBuyCust">254</div><div class="l">#Buy order customers</div></div>
-        <div class="mini-kpi"><div class="v" style="font-size:15px" id="kBuyOrd">1,492</div><div class="l">Total Buy Orders (Tổng lệnh đặt mua)</div></div>
+
+  <div class="card c-4">
+    <div class="sellside-hdr">SELL SIDE</div>
+    <div class="kpi-group">
+      <div class="kpi subcard" style="padding:0">
+        <div class="title">Total Sell Value (Tổng giá trị Bán cổ phiếu)</div>
+        <div class="big" id="kpi_sellval"><span>—</span><span class="unit">tỷ</span></div>
+        <div class="prev">%Change kỳ trước: <span id="kpi_sellval_chg" class="chg">—</span></div>
       </div>
-      <div class="card sellside" style="border:1px solid var(--border);border-top:3px solid #dc2626;padding:8px">
-        <div class="side-title sell">SELL SIDE</div>
-        <div class="mini-kpi">
-          <div class="v" id="kSellVal" style="color:#b91c1c">71bn</div>
-          <div class="l">Total Sell Value (Tổng giá trị Bán cổ phiếu)</div>
+      <div class="kpi-row">
+        <div class="sub">
+          <div class="lbl">#Sell order customers</div>
+          <div class="val" id="kpi_sellcust">—</div>
+          <div class="lbl">Số lượng Khách bán</div>
         </div>
-        <div class="mini-kpi"><div class="v" style="font-size:15px" id="kSellCust">227</div><div class="l">#Sell order customers</div></div>
-        <div class="mini-kpi"><div class="v" style="font-size:15px" id="kSellOrd">1,787</div><div class="l">Total Sell Orders (Tổng lệnh đặt bán)</div></div>
+        <div class="sub">
+          <div class="lbl">Total Sell Orders</div>
+          <div class="val" id="kpi_sellord">—</div>
+          <div class="lbl">Tổng lệnh đặt bán</div>
+        </div>
+        <div class="sub">
+          <div class="lbl">Avg / Sell Order</div>
+          <div class="val" id="kpi_sellavg">—</div>
+          <div class="lbl">(triệu VND)</div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SECTION: Market Trend -->
-<div class="section-title">Tổng quan thị phần &amp; xu hướng <em>— Market Share Overview &amp; Market Trend</em></div>
-
-<div class="card" style="margin-top:6px">
-  <div class="card-title">Market Share and Market Trends in Vietnam</div>
-  <div class="card-sub">MTV là Market Trading Value</div>
-  <div class="legend-inline">
-    <span><span class="dot" style="background:var(--bluebar)"></span>MarketShare</span>
-    <span><span class="dot" style="background:var(--amber)"></span>VNINDEX</span>
-    <span><span class="dot" style="background:var(--navy)"></span>Market Trading Value</span>
-  </div>
-  <div class="chart-wrap tall"><canvas id="chartTrend"></canvas></div>
+<!-- =============== SECTION 1 — OVERVIEW & TREND =============== -->
+<div class="row">
+  <div class="section-banner">Tổng quan thị phần &amp; xu hướng — Market Share Overview &amp; Market Trend</div>
 </div>
 
-<!-- SECTION: Phân tích thị phần -->
-<div class="section-title">Phân tích thị phần <em>— Market Share Analysis</em></div>
-
-<!-- Hệ thống đánh giá -->
-<div class="hedanhgia" style="margin-top:6px"><b>Hệ thống đánh giá:</b> ...........................................</div>
-
-<!-- ROW: WMD + By Customer Type -->
-<div class="row row-analytics">
-  <div class="card">
-    <div class="card-title">WMD</div>
-    <table class="tbl-matrix" id="tblWMD">
-      <thead><tr><th></th><th>1.Mon</th><th>2.Tue</th><th>3.Wed</th><th>4.Thu</th><th>5.Fri</th></tr></thead>
-      <tbody>
-        <tr><td>09W.Feb| 21/2-27/2</td><td class="heat" style="--a:.35">0.37%</td><td class="heat" style="--a:.38">0.39%</td><td class="heat" style="--a:.35">0.37%</td><td class="heat" style="--a:.45">0.44%</td><td class="heat" style="--a:.22">0.25%</td></tr>
-        <tr><td>10W.Feb| 28/2-6/3</td><td class="heat" style="--a:.48">0.46%</td><td class="heat" style="--a:.30">0.32%</td><td class="heat" style="--a:.33">0.34%</td><td class="heat" style="--a:.40">0.40%</td><td class="heat" style="--a:.25">0.27%</td></tr>
-        <tr><td>11W.Mar| 7/3-13/3</td><td class="heat" style="--a:.38">0.37%</td><td class="heat" style="--a:.22">0.25%</td><td class="heat" style="--a:.20">0.24%</td><td class="heat" style="--a:.38">0.39%</td><td class="heat" style="--a:.32">0.33%</td></tr>
-        <tr><td>12W.Mar| 14/3-20/3</td><td class="heat" style="--a:.25">0.28%</td><td class="heat" style="--a:.40">0.39%</td><td class="heat" style="--a:.18">0.23%</td><td class="heat" style="--a:.30">0.31%</td><td class="heat" style="--a:.22">0.26%</td></tr>
-        <tr><td>13W.Mar| 21/3-27/3</td><td class="heat" style="--a:.25">0.28%</td><td class="heat" style="--a:.26">0.28%</td><td class="heat" style="--a:.28">0.30%</td><td class="heat" style="--a:.22">0.26%</td><td class="heat" style="--a:.48">0.48%</td></tr>
-        <tr><td>14W.Mar| 28/3-3/4</td><td class="heat" style="--a:.35">0.35%</td><td class="heat" style="--a:.25">0.28%</td><td class="heat" style="--a:.22">0.25%</td><td class="heat" style="--a:.25">0.27%</td><td class="heat" style="--a:.28">0.30%</td></tr>
-        <tr><td>15W.Apr| 4/4-10/4</td><td class="heat" style="--a:.20">0.24%</td><td class="heat" style="--a:.34">0.35%</td><td class="heat" style="--a:.32">0.35%</td><td class="heat" style="--a:.32">0.34%</td><td class="heat" style="--a:.32">0.35%</td></tr>
-        <tr><td>16W.Apr| 11/4-17/4</td><td class="heat" style="--a:.30">0.33%</td><td class="heat" style="--a:.22">0.26%</td><td></td><td></td><td></td></tr>
-      </tbody>
-    </table>
+<div class="row">
+  <div class="panel c-8">
+    <h3>Market Share and Market Trends in Vietnam</h3>
+    <div class="subtitle">MTV là Market Trading Value. Biểu đồ này hiển thị xu hướng theo Ngày/Tuần/Tháng/Quý/Năm — KHÔNG bị lọc bởi "Tìm kiếm chi tiết".</div>
+    <div class="combo-wrap"><canvas id="comboChart"></canvas></div>
   </div>
-  <div class="card">
-    <div class="card-title">By Customer Type</div>
-    <div class="card-sub">Cơ cấu thị phần theo loại khách hàng</div>
-    <div id="barCustType"></div>
+  <div class="panel c-4">
+    <h3>Hệ thống đánh giá - Yếu tố thị trường</h3>
+    <div class="subtitle">(Sẽ bổ sung trong Level 2)</div>
+    <div class="eval-placeholder">Hệ thống đánh giá — Yếu tố thị trường<br>(Sẽ bổ sung trong Level 2)</div>
   </div>
 </div>
 
-<!-- ROW: Donut + Trading Platform + Device -->
-<div class="row row-donutbar">
-  <div class="card">
-    <div class="card-title">By Order Placement Method</div>
-    <div class="card-sub">Cơ cấu thị phần theo Người trực tiếp đặt lệnh</div>
-    <div class="legend-inline"><span><span class="dot" style="background:#60a5fa"></span>Khách hàng tự đặt lệnh</span><span><span class="dot" style="background:var(--amber)"></span>Môi giới đặt lệnh dùm</span></div>
-    <div class="chart-wrap med"><canvas id="donutPlacement"></canvas></div>
+<!-- =============== SECTION 2 — MARKET SHARE ANALYSIS =============== -->
+<div class="row">
+  <div class="section-banner">Phân tích thị phần — Market Share Analysis</div>
+</div>
+<div class="row">
+  <div class="section-sub">Hệ thống đánh giá (Sẽ bổ sung trong Level 2)</div>
+</div>
+
+<!-- ROW: Market Share by Weekday & Week | By Customer Type -->
+<div class="row">
+  <div class="panel c-5">
+    <h3>Market Share by Weekday &amp; Week</h3>
+    <div class="subtitle">Diễn biến thị phần theo Thứ qua các tuần</div>
+    <div class="tbl-wrap"><table class="heat" id="heat_week"></table></div>
   </div>
-  <div class="card">
-    <div class="card-title">By Trading Platform</div>
-    <div class="card-sub">Thị phần theo nền tảng giao dịch (YSFlex, YSWinner, YSInvest, Khác)</div>
-    <div id="barPlatform"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">By Device</div>
-    <div class="card-sub">Thị phần theo thiết bị sử dụng (Web, App, Desktop, Khác)</div>
-    <div id="barDevice"></div>
+  <div class="panel c-7">
+    <h3>By Customer Type</h3>
+    <div class="subtitle">Cơ cấu thị phần theo loại khách hàng (Thị phần | % tăng giảm so với kỳ trước)</div>
+    <div id="bar_custtype" class="hbar-chart"></div>
   </div>
 </div>
 
-<!-- ROW: By Branches | Platform x Device | Gen x Platform -->
-<div class="row row-segments">
-  <div class="card">
-    <div class="card-title">By Branches</div>
-    <div class="card-sub">Thị phần theo chi nhánh</div>
-    <div id="barBranch"></div>
+<!-- ROW: By Order Placement Method | By Trading Platform | By Device -->
+<div class="row">
+  <div class="panel c-4">
+    <h3>By Order Placement Method</h3>
+    <div class="subtitle">Cơ cấu thị phần theo Người trực tiếp đặt lệnh</div>
+    <div class="donut-wrap">
+      <div class="donut-chart"><canvas id="donutOrder"></canvas></div>
+      <div class="donut-legend" id="donutOrderLegend"></div>
+    </div>
   </div>
-  <div class="card">
-    <div class="card-title">By Trading Platform x Device</div>
-    <table class="tbl-matrix">
-      <thead><tr><th>Device</th><th>1.YSFlex</th><th>2.YSwinner</th></tr></thead>
-      <tbody>
-        <tr><td>01.Mobile</td><td class="heat" style="--a:.55">0.11%</td><td class="heat" style="--a:.15">0.01%</td></tr>
-        <tr><td>02.Web</td><td class="heat" style="--a:.45">0.09%</td><td class="heat" style="--a:.22">0.03%</td></tr>
-      </tbody>
-    </table>
+  <div class="panel c-4">
+    <h3>By Trading Platform</h3>
+    <div class="subtitle">Thị phần theo nền tảng giao dịch (YSFlex, YSWinner, YSInvest, Khác). (Thị phần | % tăng giảm so với kỳ trước)</div>
+    <div id="bar_platform" class="hbar-chart"></div>
   </div>
-  <div class="card">
-    <div class="card-title">By Gen x Trading Platform</div>
-    <table class="tbl-matrix">
-      <thead><tr><th>gen</th><th>YSFlex<br>Android</th><th>YSFlex<br>IOS</th><th>YSFlex<br>Web</th><th>YSwinner<br>Mobile</th><th>YSwinner<br>Web</th></tr></thead>
-      <tbody>
-        <tr><td>1. Gen Z (1997-2012)</td><td class="heat" style="--a:.05">0.00%</td><td class="heat" style="--a:.08">0.00%</td><td class="heat" style="--a:.08">0.00%</td><td class="heat" style="--a:.05">0.00%</td><td class="heat" style="--a:.10">0.01%</td></tr>
-        <tr><td>2. Gen Y (1981-1996)</td><td class="heat" style="--a:.20">0.01%</td><td class="heat" style="--a:.60">0.04%</td><td class="heat" style="--a:.30">0.02%</td><td class="heat" style="--a:.15">0.01%</td><td class="heat" style="--a:.15">0.01%</td></tr>
-        <tr><td>3. Gen X (1965 - 1980)</td><td class="heat" style="--a:.10">0.00%</td><td class="heat" style="--a:.30">0.02%</td><td class="heat" style="--a:.40">0.03%</td><td class="heat" style="--a:.10">0.00%</td><td class="heat" style="--a:.18">0.01%</td></tr>
-        <tr><td>4. Gen W (1946-1964)</td><td class="heat" style="--a:.05">0.00%</td><td class="heat" style="--a:.08">0.00%</td><td class="heat" style="--a:.18">0.01%</td><td class="heat" style="--a:.05">0.00%</td><td class="heat" style="--a:.15">0.01%</td></tr>
-      </tbody>
-    </table>
+  <div class="panel c-4">
+    <h3>By Device</h3>
+    <div class="subtitle">Thị phần theo thiết bị sử dụng (Web, App, Desktop, Khác). (Thị phần | % tăng giảm so với kỳ trước)</div>
+    <div id="bar_device" class="hbar-chart"></div>
   </div>
 </div>
 
-<!-- ROW: Nav Range + Nav Segment x Platform -->
-<div class="row row-nav">
-  <div class="card">
-    <div class="card-title">By Nav Range</div>
-    <div class="card-sub">Cơ cấu thị phần theo quy mô tài sản ròng (NAV)</div>
-    <div id="barNav"></div>
+<!-- ROW: By Branches | By Trading Platform x Device | By Gen x Trading Platform -->
+<div class="row">
+  <div class="panel c-4">
+    <h3>By Branches</h3>
+    <div class="subtitle">Thị phần theo chi nhánh. (Thị phần | % tăng giảm so với kỳ trước)</div>
+    <div id="bar_branch" class="hbar-chart"></div>
   </div>
-  <div class="card">
-    <div class="card-title">By Nav Segment x Trading Platform</div>
-    <table class="tbl-matrix">
-      <thead><tr><th>nav_name_withnb</th><th>YSFlex<br>Android</th><th>YSFlex<br>IOS</th><th>YSFlex<br>Web</th><th>YSwinner<br>Mobile</th><th>YSwinner<br>Web</th></tr></thead>
-      <tbody>
-        <tr><td>01. Rất nhỏ (0 – 10 tr)</td><td>0.00%</td><td>0.00%</td><td>0.00%</td><td>0.00%</td><td>0.00%</td></tr>
-        <tr><td>02. Đại chúng (10 – 100 tr)</td><td>0.00%</td><td>0.00%</td><td>0.00%</td><td>0.00%</td><td>0.00%</td></tr>
-        <tr><td>03. NĐT tích cực (100 – 500 tr)</td><td class="heat" style="--a:.20">0.00%</td><td class="heat" style="--a:.30">0.01%</td><td>0.00%</td><td class="heat" style="--a:.20">0.00%</td><td class="heat" style="--a:.20">0.00%</td></tr>
-        <tr><td>04. KH khá giả (500 tr – 1 tỷ)</td><td>0.00%</td><td class="heat" style="--a:.30">0.01%</td><td class="heat" style="--a:.20">0.00%</td><td>0.00%</td><td>0.00%</td></tr>
-        <tr><td>05. KH giàu / cao cấp (1 – 5 tỷ)</td><td class="heat" style="--a:.20">0.00%</td><td class="heat" style="--a:.65">0.02%</td><td class="heat" style="--a:.30">0.01%</td><td class="heat" style="--a:.20">0.00%</td><td class="heat" style="--a:.35">0.01%</td></tr>
-        <tr><td>06. KH giá trị tài sản cao (5 – 20 tỷ)</td><td class="heat" style="--a:.20">0.00%</td><td class="heat" style="--a:.35">0.01%</td><td class="heat" style="--a:.45">0.01%</td><td>0.00%</td><td class="heat" style="--a:.28">0.01%</td></tr>
-        <tr><td>07. KH siêu giàu (>= 20 tỷ)</td><td>0.00%</td><td class="heat" style="--a:.65">0.02%</td><td class="heat" style="--a:.85">0.04%</td><td>0.00%</td><td class="heat" style="--a:.28">0.01%</td></tr>
-      </tbody>
-    </table>
+  <div class="panel c-4">
+    <h3>By Trading Platform x Device</h3>
+    <div class="subtitle">Device</div>
+    <div class="tbl-wrap"><table class="heat" id="heat_platdev"></table></div>
+  </div>
+  <div class="panel c-4">
+    <h3>By Gen x Trading Platform</h3>
+    <div class="subtitle">gen</div>
+    <div class="tbl-wrap"><table class="heat" id="heat_gen"></table></div>
   </div>
 </div>
 
-<!-- SECTION: Customer & Broker Deep Dive -->
-<div class="section-title">Chi tiết khách hàng và môi giới <em>— Customer &amp; Broker Deep Dive</em></div>
-
-<div class="row row-broker" style="margin-top:6px">
-  <div class="card">
-    <div class="card-title">TOP 10 Brokers</div>
-    <div class="card-sub">TOP môi giới có thị phần lớn nhất</div>
-    <table id="tblTopBroker">
-      <thead><tr><th>trader_name</th><th>branch_name_short</th><th style="width:28%">MarketShare</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-  <div class="card">
-    <div class="card-title">BOTTOM 10 Brokers</div>
-    <div class="card-sub">Môi giới có thị phần nhỏ nhất</div>
-    <table id="tblBotBroker">
-      <thead><tr><th>trader_name</th><th>branch_name_short</th><th style="width:28%">MarketShare</th></tr></thead>
-      <tbody></tbody>
-    </table>
+<!-- ROW: By Nav Range (full) -->
+<div class="row">
+  <div class="panel c-12">
+    <h3>By Nav Range</h3>
+    <div class="subtitle">Cơ cấu thị phần theo quy mô tài sản ròng (NAV). (Thị phần | % tăng giảm so với kỳ trước)</div>
+    <div id="bar_nav" class="hbar-chart"></div>
   </div>
 </div>
 
-<div class="row" style="margin-top:6px">
-  <div class="card">
-    <div class="card-title">TOP 10 Customers</div>
-    <div class="card-sub">TOP khách hàng có thị phần lớn nhất</div>
-    <table id="tblTopCust">
-      <thead><tr><th>accountno</th><th>CustomerName</th><th>Open Date</th><th>nav_name_withnb</th><th>Trader</th><th>Branch</th><th style="width:14%">MarketShare</th></tr></thead>
-      <tbody></tbody>
-    </table>
+<!-- ROW: By Active Trading Level | By Nav Segment x Trading Platform -->
+<div class="row">
+  <div class="panel c-5">
+    <h3>By Active Trading Level</h3>
+    <div class="subtitle">Thị phần theo mức độ Active của khách hàng. (Thị phần | % tăng giảm so với kỳ trước)</div>
+    <div id="bar_active" class="hbar-chart"></div>
+  </div>
+  <div class="panel c-7">
+    <h3>By Nav Segment x Trading Platform</h3>
+    <div class="subtitle">nav_name_withnb</div>
+    <div class="tbl-wrap"><table class="heat" id="heat_navplat"></table></div>
   </div>
 </div>
 
-<!-- Disclaimer -->
-<div class="disclaimer">
-  <b>Prototype &amp; Disclaimer</b><br>
-  • Prototype tạo bởi <b>Dương Ngọc Linh</b> — dành cho <b>Key User Feedback</b> (không phải sản phẩm chính thức)<br>
-  • ⚠ Dữ liệu mô phỏng — <b>KHÔNG</b> phải dữ liệu thực (Simulated data — NOT real data)<br>
-  • Prototype theo hai cấp độ phân tích: <b>Mô tả</b> (Descriptive: What is happening?) &amp; <b>Chẩn đoán</b> (Diagnostic: Why is it happening?)
+<!-- =============== SECTION 3 — DEEP DIVE =============== -->
+<div class="row">
+  <div class="section-banner">Chi tiết khách hàng và môi giới — Customer &amp; Broker Deep Dive</div>
 </div>
 
+<!-- ROW: TOP 10 Brokers | BOTTOM 10 Brokers -->
+<div class="row">
+  <div class="panel c-6">
+    <h3>TOP 10 Brokers</h3>
+    <div class="subtitle">TOP môi giới có thị phần lớn nhất. %Change là % tăng giảm thị phần so với kỳ trước</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl_top_brokers"></table></div>
+  </div>
+  <div class="panel c-6">
+    <h3>BOTTOM 10 Brokers</h3>
+    <div class="subtitle">Môi giới có thị phần nhỏ nhất. %Change là % tăng giảm thị phần so với kỳ trước</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl_bot_brokers"></table></div>
+  </div>
+</div>
+
+<!-- ROW: TOP 10 Customers (full) -->
+<div class="row">
+  <div class="panel c-12">
+    <h3>TOP 10 Customers</h3>
+    <div class="subtitle">TOP khách hàng có thị phần lớn nhất. %Change là % tăng giảm thị phần so với kỳ trước</div>
+    <div class="tbl-wrap"><table class="tbl" id="tbl_top_cust"></table></div>
+  </div>
+</div>
+
+<!-- =============== DISCLAIMER =============== -->
+<div class="row">
+  <div class="c-12">
+    <div class="disclaimer">
+      <b>Prototype &amp; Disclaimer</b><br>
+      • Prototype tạo bởi <b>Dương Ngọc Linh</b> — dành cho <b>Key User Feedback</b> (không phải sản phẩm chính thức)<br>
+      • ⚠ Dữ liệu mô phỏng — <b>KHÔNG</b> phải dữ liệu thực (Simulated data — NOT real data)<br>
+      • Prototype theo hai cấp độ phân tích: <b>Mô tả</b> (Descriptive: What is happening?) &amp; <b>Chẩn đoán</b> (Diagnostic: Why is it happening?)
+    </div>
+  </div>
+</div>
+
+</div><!-- /dashboard -->
 
 <script>
-/* ========================================================================
-   SIMULATED DATASET – 500 rows for filter-driven behavior
-======================================================================== */
-const TRADERS = Array.from({length:9},(_,i)=>'Môi giới '+String(i+1).padStart(2,'0'));
-const ACCOUNTS = Array.from({length:12},(_,i)=>'Tài khoản '+String(i+1).padStart(2,'0'));
-const CUSTOMERS = Array.from({length:11},(_,i)=>'Khách hàng '+String(i+1).padStart(2,'0'));
-const BRANCHES = ['TTKD 06','TTKD 1','TTKD Nam HN','TTKD 06 HN','CN Chợ Lớn','P.KH Cao Cấp','CN Bình Dương','TTKD 3','CN Đà Nẵng','CN Đồng Nai','TT GD Online','CN Vũng Tàu','KH Định Chế'];
-const DEVICES = ['Mobile','Web','Uncategorized'];
-const PLATFORMS = ['1.YSFlex','2.YSwinner','3.YSInvest','4.Uncategorized'];
-const GENS = ['1. Gen Z (1997-2012)','2. Gen Y (1981-1996)','3. Gen X (1965 - 1980)','4. Gen W (1946-1964)'];
-const NAVS = ['01. Rất nhỏ (0 – 10 tr)','02. Đại chúng (10 – 100 tr)','03. NĐT tích cực (100 – 500 tr)','04. KH khá giả (500 tr – 1 tỷ)','05. KH giàu / cao cấp (1 – 5 tỷ)','06. KH giá trị tài sản cao (5 – 20 tỷ)','07. KH siêu giàu (>= 20 tỷ)'];
+/* =============================================================
+   DATA MODEL — SIMULATED 500-ROW DATASET + AGGREGATIONS
+   Note: All displayed values are PDF values × 1.8 (internal rule).
+============================================================= */
+const SCALE = 1.8;
+const fmtPct = (v, dec=2) => (v*100).toFixed(dec).replace('.',',') + '%';
+const fmtPct1 = v => (v*100).toFixed(1).replace('.',',') + '%';
+const fmtNum = (v, dec=0) => {
+  if (v === null || v === undefined || isNaN(v)) return '—';
+  const n = Number(v);
+  const s = n.toLocaleString('vi-VN', {minimumFractionDigits:dec, maximumFractionDigits:dec});
+  return s;
+};
+const fmtChg = v => (v>=0 ? '+' : '') + v.toFixed(2).replace('.',',') + ' %';
+const signCls = v => {
+  if (v === null || v === undefined || isNaN(v)) return 'zero';
+  if (v > 0) return 'up';
+  if (v < 0) return 'down';
+  return 'zero';
+};
+
+/* ---------- Static dictionaries (masking) ---------- */
+const TRADERS = [
+  {name:'Môi giới 01', branch:'TTKD 06',       pos:'Cộng Tác Viên'},
+  {name:'Môi giới 02', branch:'TTKD 06',       pos:'Cộng Tác Viên'},
+  {name:'Môi giới 03', branch:'TTKD 1',        pos:'Trưởng Phòng Kinh Doanh'},
+  {name:'Môi giới 04', branch:'TTKD Nam HN',   pos:'Chuyên Viên Kinh Doanh'},
+  {name:'Môi giới 05', branch:'CN Bình Dương', pos:'Chuyên viên môi giới'},
+  {name:'Môi giới 06', branch:'CN Chợ Lớn',    pos:'Chuyên viên môi giới'},
+  {name:'Môi giới 07', branch:'CN Chợ Lớn',    pos:'Chuyên Viên Tư Vấn Đầu Tư'},
+  {name:'Môi giới 08', branch:'TTKD 3',        pos:'Chuyên viên môi giới'},
+  {name:'Môi giới 09', branch:'TTKD Nam HN',   pos:'Cộng Tác Viên'}
+];
+const BRANCHES = ['TTKD 06','TTKD 1','CN Chợ Lớn','TTKD Nam HN','TTKD 3','CN Bình Dương','TTKD 06 HN','CN Đồng Nai','CN Đà Nẵng','TT GD Online','CN Vũng Tàu','KH Định Chế','P.KH Cao Cấp'];
+const ACCOUNTS = Array.from({length:12}, (_,i)=>`Tài khoản ${String(i+1).padStart(2,'0')}`);
+const CUSTOMERS = Array.from({length:30}, (_,i)=>`Khách hàng ${String(i+1).padStart(2,'0')}`);
 const CUST_TYPES = ['01.Cá nhân trong nước','02.Tổ chức trong nước','03.Nhà đầu tư nước ngoài'];
+const PLATFORMS = ['1.YSFlex','2.YSwinner','3.YSInvest','4.Uncategorized'];
+const DEVICES = ['Mobile','Web','Uncategorized'];
+const GENS = ['1. Gen Z (1997-2012)','2. Gen Y (1981-1996)','3. Gen X (1965 - 1980)','4. Gen W (1946-1964)'];
+const NAV_SEGS = [
+  '01. Rất nhỏ (0 – 10 tr)',
+  '02. Đại chúng (10 – 100 tr)',
+  '03. NĐT tích cực (100 – 500 tr)',
+  '04. KH khá giả (500 tr – 1 tỷ)',
+  '05. KH giàu / cao cấp (1 – 5 tỷ)',
+  '06. KH giá trị tài sản cao (5 – 20 tỷ)',
+  '07. KH siêu giàu (>= 20 tỷ)'
+];
+const ACTIVE_LEVELS = ['A. Acitve High','B. Active Mid','C.Active Low','D. Dormant < 3 tháng','E. Dormant > 3 tháng'];
+const ORDER_PLACE = ['Khách hàng tự đặt lệnh','Môi giới đặt lệnh dùm'];
 
-let seed=42;
-function rand(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;}
-function pick(a){return a[Math.floor(rand()*a.length)];}
+/* ---------- Deterministic RNG (seeded) for reproducible data ---------- */
+function mulberry32(seed){
+  return function(){
+    seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+}
+const rand = mulberry32(20260421);
+function rpick(arr,weights){
+  if(!weights){return arr[Math.floor(rand()*arr.length)]}
+  const total = weights.reduce((a,b)=>a+b,0);
+  let r = rand()*total;
+  for(let i=0;i<arr.length;i++){r-=weights[i];if(r<=0)return arr[i]}
+  return arr[arr.length-1];
+}
 
-const DATA = (function(){
-  const rows=[];
-  for(let i=0;i<500;i++){
-    const years=[2024,2025,2026];
-    const y=years[Math.floor(rand()*3)];
-    const m=Math.floor(rand()*(y===2026?4:12))+1;
-    const d=Math.floor(rand()*28)+1;
-    const dt=new Date(y,m-1,d);
-    const isBuy=rand()>0.48;
+/* ---------- Generate 500-row dataset ----------
+   The dataset is an "Excel mô phỏng 500 dòng" so filters can slice it.
+   Date range: 2026-03-31 .. 2026-04-17 (14 business days, like PDF)
+*/
+function buildDates(){
+  const out = [];
+  // Dates reproducing PDF x-axis (weekdays 31/3 .. 17/4 2026)
+  const start = new Date(2026,2,31); // 31 March 2026 (month is 0-indexed)
+  let d = new Date(start);
+  while(out.length < 14){
+    const wd = d.getDay(); // 0=Sun .. 6=Sat
+    if(wd>=1 && wd<=5) out.push(new Date(d));
+    d.setDate(d.getDate()+1);
+  }
+  return out;
+}
+const DATES = buildDates();
+
+/* Weighted distributions based on PDF. */
+const CUSTTYPE_W  = [0.74, 0.03, 0.01];          // Individual dominates
+const PLATFORM_W  = [0.43, 0.24, 0.00, 0.12];    // YSFlex dominates
+const DEVICE_W    = [0.28, 0.27, 0.24];          // Mobile, Web, Uncategorized
+const GEN_W       = [0.04, 0.26, 0.18, 0.06];
+const NAV_W       = [0.00, 0.01, 0.06, 0.04, 0.17, 0.12, 0.36];
+const ACTIVE_W    = [0.35, 0.17, 0.13, 0.06, 0.08];
+const BRANCH_W    = [0.24, 0.12, 0.09, 0.08, 0.05, 0.05, 0.05, 0.03, 0.03, 0.02, 0.02, 0.01, 0.01];
+const TRADER_W    = [0.14, 0.05, 0.05, 0.03, 0.02, 0.02, 0.02, 0.02, 0.02];
+const ORDER_W     = [0.86, 0.14];
+
+/* Base target absolute totals (PDF × 1.8) for current period */
+const TGT_BUY_VAL   = 192  * SCALE;   // tỷ
+const TGT_SELL_VAL  = 214  * SCALE;
+const TGT_BUY_ORD   = Math.round(4475 * SCALE);
+const TGT_SELL_ORD  = Math.round(5362 * SCALE);
+const TGT_MK_VAL    = 25817 * SCALE;
+const TGT_YS_VAL    = 406   * SCALE;
+const TGT_MK_VAL_PREV = 24629 * SCALE;
+const TGT_YS_VAL_PREV = 489   * SCALE;
+const TGT_MS_CUR    = 0.0079;  // Note: share ratios as-is (scaled by 1.8 for display only on trend chart absolute)
+const TGT_MS_PREV   = 0.0099;
+const TGT_BUYRATIO  = 4475/(4475+5362);  // ~0.4549
+const TGT_ACTIVE_N  = Math.round(1154 * SCALE);
+const TGT_TOTAL_C   = Math.round(116549 * SCALE);
+const TGT_ACTIVE_PCT= 0.0099;
+const TGT_NET       = TGT_BUY_VAL - TGT_SELL_VAL;
+
+/* Default "current period" date = latest date in data = 2026-04-17 */
+const CURRENT_DATE = DATES[DATES.length-1];
+
+/* Build 500 rows — we distribute buy/sell/orders proportionally */
+function buildData(){
+  const N = 500;
+  const rows = [];
+  // To reach target totals, split total buy/sell value evenly across rows with variance
+  const avgBuy  = TGT_BUY_VAL  * 1000 / N;  // triệu VND per row
+  const avgSell = TGT_SELL_VAL * 1000 / N;
+  const avgBO   = TGT_BUY_ORD / N;
+  const avgSO   = TGT_SELL_ORD / N;
+
+  for(let i=0;i<N;i++){
+    const d = DATES[Math.floor(rand()*DATES.length)];
+    const wd = d.getDay(); // 1..5
+    const branchIdx = (() => { // weighted branch pick
+      const total = BRANCH_W.reduce((a,b)=>a+b,0);
+      let r = rand()*total; for(let j=0;j<BRANCH_W.length;j++){r-=BRANCH_W[j]; if(r<=0) return j} return 0;
+    })();
+    const traderIdx = (() => {
+      const total = TRADER_W.reduce((a,b)=>a+b,0);
+      let r = rand()*total; for(let j=0;j<TRADER_W.length;j++){r-=TRADER_W[j]; if(r<=0) return j} return 0;
+    })();
+    const custType = rpick(CUST_TYPES, CUSTTYPE_W);
+    const platform = rpick(PLATFORMS, PLATFORM_W);
+    const device   = rpick(DEVICES, DEVICE_W);
+    const gen      = rpick(GENS, GEN_W);
+    const navSeg   = rpick(NAV_SEGS, NAV_W);
+    const active   = rpick(ACTIVE_LEVELS, ACTIVE_W);
+    const orderPl  = rpick(ORDER_PLACE, ORDER_W);
+
+    // Factors have mean 1.0 so per-row aggregates sum to targets
+    const bv = avgBuy * (0.2 + rand()*1.6);
+    const sv = avgSell* (0.2 + rand()*1.6);
+    const bo = Math.max(1, Math.round(avgBO * (0.2 + rand()*1.6)));
+    const so = Math.max(1, Math.round(avgSO * (0.2 + rand()*1.6)));
+    // Designed so the aggregate maps to TGT_ACTIVE_N via proportional scaling in the KPI renderer.
+    const isActive = rand() < 0.12;
+
     rows.push({
-      date:dt,year:y,month:m,
-      trader:pick(TRADERS),account:pick(ACCOUNTS),customer:pick(CUSTOMERS),branch:pick(BRANCHES),
-      device:pick(DEVICES),platform:pick(PLATFORMS),gen:pick(GENS),nav:pick(NAVS),custType:pick(CUST_TYPES),
-      buyValue:isBuy?Math.floor(rand()*250e6)+5e6:0,
-      sellValue:!isBuy?Math.floor(rand()*260e6)+5e6:0,
-      orders:Math.floor(rand()*12)+1,
-      isBuy:isBuy
+      date: d,
+      year: d.getFullYear(),
+      month: d.getMonth()+1,
+      quarter: Math.ceil((d.getMonth()+1)/3),
+      weekday: wd,
+      branch_name: BRANCHES[branchIdx],
+      trader_name: TRADERS[traderIdx].name,
+      trader_pos:  TRADERS[traderIdx].pos,
+      trader_branch: TRADERS[traderIdx].branch,
+      customer_name: CUSTOMERS[Math.floor(rand()*CUSTOMERS.length)],
+      account_no: ACCOUNTS[Math.floor(rand()*ACCOUNTS.length)],
+      customer_type: custType,
+      trading_platform: platform,
+      device: device,
+      gen: gen,
+      nav_segment: navSeg,
+      active_level: active,
+      order_placement: orderPl,
+      buy_value: bv,
+      sell_value: sv,
+      buy_orders: bo,
+      sell_orders: so,
+      is_active: isActive
     });
   }
   return rows;
-})();
+}
+const DATA = buildData();
 
-/* populate branch & trader selects from dataset */
-(function(){
-  const fB=document.getElementById('fBranch'), fT=document.getElementById('fTrader');
-  BRANCHES.forEach(b=>{const o=document.createElement('option');o.textContent=b;fB.appendChild(o);});
-  TRADERS.forEach(t=>{const o=document.createElement('option');o.textContent=t;fT.appendChild(o);});
-})();
+/* =============================================================
+   FILTER LOGIC
+   ============================================================= */
+const STATE = {
+  year: 'ALL',
+  grain: 'ALL',
+  details: new Set(),  // selected detail values
+  branches: new Set(), // selected branches
+  traders: new Set()   // selected traders
+};
 
-/* =====================================================================
-   FILTER LOGIC for main "Market Share and Market Trends in Vietnam"
-   Based on granularity:
-     Ngày  -> 7 most recent days
-     Tuần  -> 12 most recent weeks
-     Tháng -> 12 most recent months
-     Quý   -> 8 most recent quarters
-     Năm   -> 2-3 most recent years
-===================================================================== */
+/* Detail options mapping per grain */
+const DETAIL_MAP = {
+  'Ngày':['6/04/2026','7/04/2026','8/04/2026','9/04/2026','10/04/2026','13/04/2026','14/04/2026','15/04/2026','16/04/2026','17/04/2026'],
+  'Tuần':['Tuần 1 (1/3/2026 -7/3/2026)','Tuần 2 (8/3/2026 -15/3/2026)','Tuần 3 (16/3/2026 -23/3/2026)','Tuần 4 (24/3/2026-31/3/2026)'],
+  'Tháng':['Tháng 1','Tháng 2','Tháng 3','Tháng 4','Tháng 5','Tháng 6','Tháng 7','Tháng 8','Tháng 9','Tháng 10','Tháng 11','Tháng 12'],
+  'Quý':['Quý 1 (1/1/2026-31/3/2026)','Quý 2 (1/4/2026-30/6/2026)','Quý 3 (1/7/2026-30/9/2026)','Quý 4 (1/10/2026-31/12/2026)'],
+  'ALL': []
+};
 
-function buildTrendData(){
-  const gran=document.getElementById('fGran').value;
-  const year=document.getElementById('fYear').value;
-  // default to "Ngày" (14 days - mirror PDF)
-  let labels=[], ms=[], mtv=[], vni=[];
-
-  if(gran==='Tuần'){
-    labels=['08W','09W','10W','11W','12W','13W','14W','15W','16W','17W','18W','19W'];
-    ms=[0.30,0.36,0.34,0.28,0.27,0.33,0.29,0.32,0.28,0.30,0.31,0.26];
-    mtv=[560,580,552,586,571,579,554,561,587,558,565,559];
-    vni=[1620,1635,1645,1660,1655,1670,1665,1680,1690,1700,1710,1705];
-  } else if(gran==='Tháng'){
-    labels=['T5/25','T6/25','T7/25','T8/25','T9/25','T10/25','T11/25','T12/25','T1/26','T2/26','T3/26','T4/26'];
-    ms=[0.28,0.30,0.32,0.29,0.27,0.26,0.28,0.31,0.29,0.32,0.34,0.30];
-    mtv=[555,570,580,566,548,540,558,585,572,590,598,572];
-    vni=[1580,1600,1620,1610,1600,1620,1640,1655,1665,1680,1695,1705];
-  } else if(gran==='Quý'){
-    labels=['Q3/24','Q4/24','Q1/25','Q2/25','Q3/25','Q4/25','Q1/26','Q2/26'];
-    ms=[0.25,0.27,0.29,0.30,0.28,0.29,0.32,0.30];
-    mtv=[540,560,570,575,560,580,595,585];
-    vni=[1520,1540,1580,1610,1630,1650,1680,1705];
-  } else if(gran==='Năm'){
-    labels=['2024','2025','2026'];
-    ms=[0.27,0.29,0.31];
-    mtv=[550,570,590];
-    vni=[1500,1620,1705];
-  } else {
-    // Ngày (default) – 14 days like PDF but 1/3
-    labels=['26/3','27/3','30/3','31/3','1/4','2/4','3/4','6/4','7/4','8/4','9/4','10/4','13/4','14/4'];
-    ms=[0.26,0.48,0.35,0.28,0.25,0.27,0.30,0.24,0.35,0.35,0.34,0.35,0.33,0.26];
-    mtv=[548,592,558,586,568,579,554,561,586,558,565,559,583,567];
-    vni=[1645,1776,1675,1757,1703,1737,1663,1684,1759,1674,1695,1678,1750,1720];
-    // If Ngày explicitly: show 7 most recent days
-    if(gran==='Ngày'){
-      labels=labels.slice(-7); ms=ms.slice(-7); mtv=mtv.slice(-7); vni=vni.slice(-7);
-    }
+/* Parse detail string to a date-range predicate */
+function detailPredicate(grain, detailVals){
+  if (!detailVals || detailVals.size===0) return null;
+  const vals = [...detailVals];
+  if (grain==='Ngày'){
+    const ds = vals.map(v=>{ const [d,m,y]=v.split('/'); return new Date(+y,+m-1,+d).getTime() });
+    return (row)=> ds.includes(row.date.getTime());
   }
-  return {labels,ms,mtv,vni};
+  if (grain==='Tuần'){
+    // Weeks referenced in March 2026
+    const ranges = {
+      'Tuần 1 (1/3/2026 -7/3/2026)':   [new Date(2026,2,1),  new Date(2026,2,7)],
+      'Tuần 2 (8/3/2026 -15/3/2026)':  [new Date(2026,2,8),  new Date(2026,2,15)],
+      'Tuần 3 (16/3/2026 -23/3/2026)': [new Date(2026,2,16), new Date(2026,2,23)],
+      'Tuần 4 (24/3/2026-31/3/2026)':  [new Date(2026,2,24), new Date(2026,2,31)]
+    };
+    return (row)=> vals.some(v=>{const [s,e]=ranges[v]; return row.date>=s && row.date<=e});
+  }
+  if (grain==='Tháng'){
+    const months = vals.map(v=>+v.replace('Tháng ',''));
+    return (row)=> months.includes(row.month);
+  }
+  if (grain==='Quý'){
+    const map = {'Quý 1 (1/1/2026-31/3/2026)':1,'Quý 2 (1/4/2026-30/6/2026)':2,'Quý 3 (1/7/2026-30/9/2026)':3,'Quý 4 (1/10/2026-31/12/2026)':4};
+    const qs = vals.map(v=>map[v]);
+    return (row)=> qs.includes(row.quarter);
+  }
+  return null;
 }
 
-/* =====================================================================
-   BAR helpers (horizontal bar rows with labels)
-===================================================================== */
-function calcPctChange(curr, prev){
-  if(prev===0 && curr===0) return {cls:'flat', text:'0.0%'};
-  if(prev===0) return {cls:'up', text:'New'};
-  const chg=((curr-prev)/prev)*100;
-  if(Math.abs(chg)<0.05) return {cls:'flat', text:'0.0%'};
-  return {
-    cls: chg>0 ? 'up' : 'down',
-    text: `${chg>0?'↑':'↓'}${Math.abs(chg).toFixed(1)}%`
-  };
+/* Default detail if user picked grain but no detail */
+function defaultDetailByGrain(grain){
+  if (grain==='Ngày'){
+    return (row)=> row.date.getTime() === CURRENT_DATE.getTime();
+  }
+  if (grain==='Tháng'){
+    const maxM = Math.max(...DATA.map(r=>r.month));
+    return (row)=> row.month === maxM;
+  }
+  if (grain==='Quý'){
+    const maxQ = Math.max(...DATA.map(r=>r.quarter));
+    return (row)=> row.quarter === maxQ;
+  }
+  if (grain==='Tuần'){
+    // pick latest week — we'll just pick rows in last week of March 2026
+    return (row)=> row.date >= new Date(2026,2,24) && row.date <= new Date(2026,2,31);
+  }
+  return null;
 }
 
-function renderBars(containerId, items, fmt, maxOverride){
-  const c=document.getElementById(containerId);
-  c.innerHTML='';
-  const max=maxOverride||Math.max(...items.map(i=>i.v));
-  items.forEach(it=>{
-    const w=max>0?(it.v/max*100):0;
-    const prev = Object.prototype.hasOwnProperty.call(it,'prev') ? it.prev : it.v;
-    const change = calcPctChange(it.v, prev);
-    const div=document.createElement('div');
-    div.className='bar-row';
-    div.innerHTML=`<div class="lbl" title="${it.l}">${it.l}</div><div class="bar"><div style="width:${w}%"></div></div><div class="val"><div class="val-line"><span>${fmt(it.v)}</span><span class="chg ${change.cls}">${change.text}</span></div></div>`;
-    c.appendChild(div);
+function applyFilters(){
+  const {year, grain, details, branches, traders} = STATE;
+  let pred = (r)=>true;
+  if (year!=='ALL') pred = and(pred, r=>String(r.year)===year);
+  const detPred = detailPredicate(grain, details);
+  if (detPred) pred = and(pred, detPred);
+  else if (grain!=='ALL') pred = and(pred, defaultDetailByGrain(grain));
+  if (branches.size>0) pred = and(pred, r=>branches.has(r.branch_name));
+  if (traders.size>0)  pred = and(pred, r=>traders.has(r.trader_name));
+  return DATA.filter(pred);
+}
+function and(a,b){return (r)=>a(r)&&b(r)}
+
+/* =============================================================
+   RENDER FUNCTIONS
+   ============================================================= */
+
+/* ---------- KPI cards ---------- */
+function renderKPIs(rows){
+  // Base totals from filtered rows (in triệu VND)
+  const buyValMil  = rows.reduce((s,r)=>s+r.buy_value,0);
+  const sellValMil = rows.reduce((s,r)=>s+r.sell_value,0);
+  const buyOrd     = rows.reduce((s,r)=>s+r.buy_orders,0);
+  const sellOrd    = rows.reduce((s,r)=>s+r.sell_orders,0);
+  const totOrd     = buyOrd + sellOrd;
+  const uniqBuyCust  = new Set(rows.filter(r=>r.buy_value>0).map(r=>r.customer_name+r.account_no)).size;
+  const uniqSellCust = new Set(rows.filter(r=>r.sell_value>0).map(r=>r.customer_name+r.account_no)).size;
+  const activeCust = rows.filter(r=>r.is_active).length;
+  const totCust    = rows.length;
+
+  // Scale from triệu VND to tỷ VND for display (and factor to reach PDF×1.8 target with full-dataset default)
+  // Since we designed dataset to sum near targets when unfiltered, we display directly in tỷ (buyValMil/1000)
+  const buyValTy  = buyValMil / 1000;
+  const sellValTy = sellValMil / 1000;
+  const netTy     = buyValTy - sellValTy;
+
+  // For Market share / YSVN / Market trading value — these are "period totals", not row aggregates
+  // We fake them based on the ratio of (filtered rows / all rows) applied to targets.
+  const ratio = rows.length>0 ? rows.length / DATA.length : 0;
+  const msCur   = TGT_MS_CUR   * SCALE * (rows.length>0 ? 1 : 0);
+  const msPrev  = TGT_MS_PREV  * SCALE;
+  const msChgP  = msPrev>0 ? (msCur - msPrev)/msPrev * 100 : 0;
+
+  const ysCur   = TGT_YS_VAL * Math.max(ratio,0.00001);
+  const ysPrev  = TGT_YS_VAL_PREV * Math.max(ratio,0.00001);
+  const ysChgP  = ysPrev>0 ? (ysCur - ysPrev)/ysPrev * 100 : 0;
+
+  const mkCur   = TGT_MK_VAL  * Math.max(ratio,0.00001);
+  const mkPrev  = TGT_MK_VAL_PREV * Math.max(ratio,0.00001);
+  const mkChgP  = mkPrev>0 ? (mkCur - mkPrev)/mkPrev * 100 : 0;
+
+  // Invented %Change for cards (user requested but PDF doesn't supply)
+  const netChgP    = -15.20;
+  const buyValChgP =  +5.80;
+  const sellValChgP = +3.20;
+  const buyRatioValChgP = -4.50;
+
+  const buyRatio = totOrd>0 ? buyOrd/totOrd : 0;
+  const activePct = totCust>0 ? activeCust/totCust : 0;
+
+  /* ---- Market Share card ---- */
+  const msEl = document.getElementById('kpi_ms');
+  msEl.innerHTML = `<span>${fmtPct(msCur,2)}</span>`;
+  msEl.className = 'big ' + (msChgP>0 ? 'pos' : 'neg');
+  document.getElementById('kpi_ms_prev').textContent = fmtPct(msPrev,2);
+  const msChgEl = document.getElementById('kpi_ms_chg');
+  msChgEl.textContent = fmtChg(msChgP);
+  msChgEl.className = 'chg ' + signCls(msChgP);
+
+  /* ---- YSVN Trading Value card ---- */
+  const ysEl = document.getElementById('kpi_ys');
+  ysEl.innerHTML = `<span>${fmtNum(ysCur,0)}</span><span class="unit">tỷ</span>`;
+  ysEl.className = 'big ' + (ysChgP>0 ? 'pos' : 'neg');
+  document.getElementById('kpi_ys_prev').textContent = fmtNum(ysPrev,0);
+  const ysChgEl = document.getElementById('kpi_ys_chg');
+  ysChgEl.textContent = fmtChg(ysChgP);
+  ysChgEl.className = 'chg ' + signCls(ysChgP);
+
+  /* ---- Market Trading Value card ---- */
+  const mkEl = document.getElementById('kpi_mk');
+  mkEl.innerHTML = `<span>${fmtNum(mkCur,0)}</span><span class="unit">tỷ</span>`;
+  mkEl.className = 'big ' + (mkChgP>0 ? 'pos' : 'neg');
+  document.getElementById('kpi_mk_prev').textContent = fmtNum(mkPrev,0);
+  const mkChgEl = document.getElementById('kpi_mk_chg');
+  mkChgEl.textContent = fmtChg(mkChgP);
+  mkChgEl.className = 'chg ' + signCls(mkChgP);
+
+  /* ---- Net Buy-Sell card ---- */
+  const netEl = document.getElementById('kpi_net');
+  netEl.innerHTML = `<span>${fmtNum(netTy,0)}</span><span class="unit">tỷ</span>`;
+  netEl.className = 'big ' + (netTy>0 ? 'pos' : 'neg');
+  const netChgEl = document.getElementById('kpi_net_chg');
+  netChgEl.textContent = fmtChg(netChgP);
+  netChgEl.className = 'chg ' + signCls(netChgP);
+
+  /* ---- %Active Customers ---- */
+  document.getElementById('kpi_active').innerHTML  = `<span>${fmtPct(TGT_ACTIVE_PCT*SCALE*(rows.length>0?1:0),2)}</span>`;
+  document.getElementById('kpi_active_n').textContent = fmtNum(activeCust * Math.round(TGT_ACTIVE_N/Math.max(1,DATA.filter(r=>r.is_active).length)),0);
+  document.getElementById('kpi_total_c').textContent  = fmtNum(Math.round(TGT_TOTAL_C * Math.max(ratio,0.00001)),0);
+
+  /* ---- %Buy Order/Total Orders ---- */
+  const brEl = document.getElementById('kpi_buyratio');
+  brEl.innerHTML = `<span>${(buyRatio*100).toFixed(0).replace('.',',')}%</span>`;
+  brEl.className = 'big ' + (buyRatio>=0.5 ? 'pos' : 'neg');
+  document.getElementById('kpi_totorders').textContent = fmtNum(totOrd,0);
+  const brChgEl = document.getElementById('kpi_buyratio_chg');
+  brChgEl.textContent = fmtChg(buyRatioValChgP);
+  brChgEl.className = 'chg ' + signCls(buyRatioValChgP);
+
+  /* ---- BUY SIDE ---- */
+  document.getElementById('kpi_buyval').innerHTML = `<span>${fmtNum(buyValTy,0)}</span><span class="unit">tỷ</span>`;
+  document.getElementById('kpi_buycust').textContent = fmtNum(Math.round(uniqBuyCust * (761*SCALE/Math.max(1, new Set(DATA.filter(r=>r.buy_value>0).map(r=>r.customer_name+r.account_no)).size))),0);
+  document.getElementById('kpi_buyord').textContent  = fmtNum(buyOrd,0);
+  document.getElementById('kpi_buyavg').textContent  = buyOrd>0 ? fmtNum(buyValMil/buyOrd,1) : '—';
+  const bvChg = document.getElementById('kpi_buyval_chg');
+  bvChg.textContent = fmtChg(buyValChgP);
+  bvChg.className = 'chg ' + signCls(buyValChgP);
+
+  /* ---- SELL SIDE ---- */
+  document.getElementById('kpi_sellval').innerHTML = `<span>${fmtNum(sellValTy,0)}</span><span class="unit">tỷ</span>`;
+  document.getElementById('kpi_sellcust').textContent = fmtNum(Math.round(uniqSellCust * (682*SCALE/Math.max(1, new Set(DATA.filter(r=>r.sell_value>0).map(r=>r.customer_name+r.account_no)).size))),0);
+  document.getElementById('kpi_sellord').textContent  = fmtNum(sellOrd,0);
+  document.getElementById('kpi_sellavg').textContent  = sellOrd>0 ? fmtNum(sellValMil/sellOrd,1) : '—';
+  const svChg = document.getElementById('kpi_sellval_chg');
+  svChg.textContent = fmtChg(sellValChgP);
+  svChg.className = 'chg ' + signCls(sellValChgP);
+}
+
+/* ---------- Horizontal bar helper ---------- */
+function renderHBar(id, data, {axisTicks}={}){
+  const el = document.getElementById(id);
+  const max = Math.max(...data.map(d=>d.value), 0.0001);
+  let html = '';
+  data.forEach(d=>{
+    const w = Math.max(1, (d.value/max)*100);
+    html += `<div class="hbar-row">
+      <div class="hbar-label" title="${d.label}">${d.label}</div>
+      <div class="hbar-track"><div class="hbar-fill" style="width:${w}%"></div></div>
+      <div class="hbar-value">${d.display}</div>
+      <div class="hbar-chg ${signCls(d.chg)}">${fmtChg(d.chg)}</div>
+    </div>`;
+  });
+  // Axis ticks row
+  if (axisTicks){
+    html += `<div class="axis-row">
+      <div></div>
+      <div class="axis-ticks">${axisTicks.map(t=>`<span>${t}</span>`).join('')}</div>
+      <div></div><div></div>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+/* ---------- Group by helper ---------- */
+function groupBy(rows, key, metric=(r)=>1){
+  const m = new Map();
+  for(const r of rows){
+    const k = typeof key==='function' ? key(r) : r[key];
+    m.set(k, (m.get(k)||0) + metric(r));
+  }
+  return m;
+}
+
+/* Share metric for a category = sum(buy+sell)/totalMarket.
+   For display we approximate share% = groupValue / totalGroupValue * overallMarketShare
+*/
+function shareByCategory(rows, keyFn, categories){
+  const g = groupBy(rows, keyFn, r=>r.buy_value+r.sell_value);
+  const tot = [...g.values()].reduce((a,b)=>a+b,0);
+  const overallShare = TGT_MS_CUR * SCALE * (rows.length>0?1:0); // overall filtered share
+  return categories.map(c=>{
+    const v = g.get(c) || 0;
+    return {label:c, value: tot>0 ? v/tot * overallShare : 0};
   });
 }
 
-/* =====================================================================
-   Render static (1/3) data based on PDF
-===================================================================== */
-function renderCustType(){
-  renderBars('barCustType', [
-    {l:'01.Cá nhân trong nước',v:0.30,prev:0.28},
-    {l:'02.Tổ chức trong nước',v:0.007,prev:0.009},
-    {l:'03.Nhà đầu tư nước ngoài',v:0.007,prev:0.006},
-  ], v=>v.toFixed(2)+'%', 0.32);
-}
-function renderPlatform(){
-  renderBars('barPlatform', [
-    {l:'3.YSInvest',v:0.00,prev:0.01},
-    {l:'2.YSwinner',v:0.04,prev:0.03},
-    {l:'4.Uncategorized',v:0.08,prev:0.09},
-    {l:'1.YSFlex',v:0.20,prev:0.17},
-  ], v=>v.toFixed(2)+'%', 0.22);
-}
-function renderDevice(){
-  renderBars('barDevice', [
-    {l:'Mobile',v:0.12,prev:0.10},
-    {l:'Web',v:0.11,prev:0.12},
-    {l:'Uncategorized',v:0.08,prev:0.07},
-  ], v=>v.toFixed(2)+'%', 0.14);
-}
-function renderBranch(){
-  renderBars('barBranch', [
-    {l:'TTKD 06',v:0.093,prev:0.088},
-    {l:'TTKD 1',v:0.037,prev:0.040},
-    {l:'TTKD Nam HN',v:0.030,prev:0.028},
-    {l:'TTKD 06 HN',v:0.030,prev:0.025},
-    {l:'CN Chợ Lớn',v:0.030,prev:0.032},
-    {l:'P.KH Cao Cấp',v:0.030,prev:0.027},
-    {l:'CN Bình Dương',v:0.017,prev:0.015},
-    {l:'TTKD 3',v:0.017,prev:0.019},
-    {l:'CN Đà Nẵng',v:0.010,prev:0.009},
-    {l:'CN Đồng Nai',v:0.007,prev:0.008},
-    {l:'TT GD Online',v:0.007,prev:0.006},
-    {l:'CN Vũng Tàu',v:0.007,prev:0.005},
-    {l:'KH Định Chế',v:0.003,prev:0.004},
-  ], v=>v.toFixed(3)+'%', 0.10);
-}
-function renderNav(){
-  renderBars('barNav', [
-    {l:'01. Rất nhỏ (0 – 10 tr)',v:0.000,prev:0.000},
-    {l:'02. Đại chúng (10 – 100 tr)',v:0.003,prev:0.002},
-    {l:'03. NĐT tích cực (100 – 500 tr)',v:0.020,prev:0.018},
-    {l:'04. KH khá giả (500 tr – 1 tỷ)',v:0.013,prev:0.011},
-    {l:'05. KH giàu / cao cấp (1 – 5 tỷ)',v:0.057,prev:0.051},
-    {l:'06. KH giá trị tài sản cao (5 – 20 tỷ)',v:0.040,prev:0.044},
-    {l:'07. KH siêu giàu (>= 20 tỷ)',v:0.120,prev:0.110},
-  ], v=>v.toFixed(3)+'%', 0.13);
+/* ---------- By Customer Type ---------- */
+function renderByCustomerType(rows){
+  // Target shares: ~0.74%, 0.03%, 0.01% (× 1.8)
+  const chgMap = {
+    '01.Cá nhân trong nước': +8.4,
+    '02.Tổ chức trong nước': -3.2,
+    '03.Nhà đầu tư nước ngoài': +1.1
+  };
+  const shares = shareByCategory(rows, r=>r.customer_type, CUST_TYPES);
+  const data = shares.map(s=>({
+    label: s.label,
+    value: s.value,
+    display: fmtPct(s.value,2),
+    chg: chgMap[s.label]||0
+  }));
+  renderHBar('bar_custtype', data, {axisTicks:['0,0%','0,3%','0,6%','0,9%','1,2%']});
 }
 
-/* ---- TOP / BOTTOM Brokers & Customers ---- */
-const TOP_BROKERS=[
-  {t:'Môi giới 01',b:'TTKD 06',v:0.070},
-  {t:'Môi giới 02',b:'TTKD 1',v:0.020},
-  {t:'Môi giới 03',b:'TTKD 06 HN',v:0.017},
-  {t:'Môi giới 04',b:'P.KH Cao Cấp',v:0.013},
-  {t:'Môi giới 05',b:'P.KH Cao Cấp',v:0.010},
-  {t:'Môi giới 06',b:'TTKD Nam HN',v:0.010},
-  {t:'Môi giới 07',b:'TTKD 06',v:0.007},
-  {t:'Môi giới 08',b:'CN Chợ Lớn',v:0.007},
-  {t:'Môi giới 09',b:'TTKD Nam HN',v:0.007},
-  {t:'Môi giới 04',b:'P.KH Cao Cấp',v:0.007},
-  {t:'Môi giới 01',b:'TTKD 06 HN',v:0.000}
-];
-const BOT_BROKERS=[
-  {t:'Môi giới 02',b:'TT GD Online',v:0.00000023},
-  {t:'Môi giới 03',b:'TT GD Online',v:0.00000020},
-  {t:'Môi giới 04',b:'TT GD Online',v:0.00000017},
-  {t:'Môi giới 05',b:'TT GD Online',v:0.00000017},
-  {t:'Môi giới 06',b:'TTKD 1',v:0.00000017},
-  {t:'Môi giới 07',b:'TTKD 1',v:0.00000013},
-  {t:'Môi giới 08',b:'TTKD 06 HN',v:0.00000010},
-  {t:'Môi giới 09',b:'TT GD Online',v:0.00000010},
-  {t:'Môi giới 01',b:'TTKD 06',v:0.00000007},
-  {t:'Môi giới 02',b:'TTKD 06',v:0.00000003},
-];
-const TOP_CUSTS=[
-  {a:'Tài khoản 01',c:'Khách hàng 01',d:'6/6/2025',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 01',b:'TTKD 06',v:0.013},
-  {a:'Tài khoản 02',c:'Khách hàng 02',d:'8/21/2024',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 04',b:'P.KH Cao Cấp',v:0.010},
-  {a:'Tài khoản 03',c:'Khách hàng 03',d:'4/25/2024',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 01',b:'TTKD 06',v:0.010},
-  {a:'Tài khoản 04',c:'Khách hàng 04',d:'3/27/2024',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 01',b:'TTKD 06',v:0.010},
-  {a:'Tài khoản 05',c:'Khách hàng 05',d:'4/3/2026',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 03',b:'TTKD 06 HN',v:0.010},
-  {a:'Tài khoản 06',c:'Khách hàng 06',d:'3/12/2026',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 01',b:'TTKD 06',v:0.010},
-  {a:'Tài khoản 07',c:'Khách hàng 07',d:'3/31/2025',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 01',b:'TTKD 06',v:0.010},
-  {a:'Tài khoản 08',c:'Khách hàng 08',d:'3/13/2025',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 06',b:'TTKD Nam HN',v:0.010},
-  {a:'Tài khoản 09',c:'Khách hàng 09',d:'3/7/2025',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 01',b:'TTKD 06',v:0.007},
-  {a:'Tài khoản 10',c:'Khách hàng 10',d:'8/16/2024',n:'07. KH siêu giàu (>= 20 tỷ)',t:'Môi giới 02',b:'TTKD 1',v:0.007},
-  {a:'Tài khoản 11',c:'Khách hàng 11',d:'5/19/2022',n:'06. KH giá trị tài sản cao (5 – 20 tỷ)',t:'Môi giới 07',b:'CN Bình Dương',v:0.000},
-];
-
-function fmtPct(v, digits){return v.toFixed(digits||2)+'%';}
-function fmtPctSci(v){if(v<0.001)return v.toExponential(1)+'%';return v.toFixed(4)+'%';}
-
-function renderBrokerTables(){
-  const top=document.querySelector('#tblTopBroker tbody');
-  const maxT=Math.max(...TOP_BROKERS.map(x=>x.v));
-  top.innerHTML=TOP_BROKERS.map(r=>{
-    const w=r.v/maxT*100;
-    return `<tr><td>${r.t}</td><td>${r.b}</td><td class="bar-cell"><div style="display:flex;align-items:center;gap:4px"><div style="flex:1;background:#eef2f7;height:10px;border-radius:1px"><div style="width:${w}%;height:100%;background:var(--bluebar)"></div></div><span class="label-strong" style="color:var(--navy);min-width:42px;text-align:right">${fmtPct(r.v,3)}</span></div></td></tr>`;
-  }).join('')+`<tr><td colspan="2" class="label-strong">Total</td><td class="label-strong" style="text-align:right">0.163%</td></tr>`;
-
-  const bot=document.querySelector('#tblBotBroker tbody');
-  const maxB=Math.max(...BOT_BROKERS.map(x=>x.v));
-  bot.innerHTML=BOT_BROKERS.map(r=>{
-    const w=r.v/maxB*100;
-    return `<tr><td>${r.t}</td><td>${r.b}</td><td class="bar-cell"><div style="display:flex;align-items:center;gap:4px"><div style="flex:1;background:#eef2f7;height:10px;border-radius:1px"><div style="width:${w}%;height:100%;background:var(--bluebar)"></div></div><span class="label-strong" style="color:var(--navy);min-width:64px;text-align:right;font-size:9px">${fmtPctSci(r.v)}</span></div></td></tr>`;
-  }).join('')+`<tr><td colspan="2" class="label-strong">Total</td><td class="label-strong" style="text-align:right;font-size:9px">0.0000013%</td></tr>`;
+/* ---------- By Trading Platform ---------- */
+function renderByPlatform(rows){
+  const chgMap = {'1.YSFlex':+5.6,'2.YSwinner':-2.1,'3.YSInvest':0.0,'4.Uncategorized':+0.9};
+  const sh = shareByCategory(rows, r=>r.trading_platform, PLATFORMS);
+  // Sort ascending (as PDF: YSInvest at top, YSFlex bottom)
+  const order = ['3.YSInvest','2.YSwinner','4.Uncategorized','1.YSFlex'];
+  const data = order.map(n=>{
+    const it = sh.find(x=>x.label===n) || {value:0};
+    return {label:n, value:it.value, display:fmtPct(it.value,2), chg: chgMap[n]||0};
+  });
+  renderHBar('bar_platform', data, {axisTicks:['0,0%','0,2%','0,4%','0,6%','0,8%']});
 }
 
-function renderCustomerTable(){
-  const tb=document.querySelector('#tblTopCust tbody');
-  const maxV=Math.max(...TOP_CUSTS.map(x=>x.v));
-  tb.innerHTML=TOP_CUSTS.map(r=>{
-    const w=maxV>0?(r.v/maxV*100):0;
-    return `<tr><td>${r.a}</td><td>${r.c}</td><td>${r.d}</td><td>${r.n}</td><td>${r.t}</td><td>${r.b}</td><td class="bar-cell"><div style="display:flex;align-items:center;gap:4px"><div style="flex:1;background:#eef2f7;height:10px;border-radius:1px"><div style="width:${w}%;height:100%;background:var(--bluebar)"></div></div><span class="label-strong" style="color:var(--navy);min-width:42px;text-align:right">${fmtPct(r.v,3)}</span></div></td></tr>`;
-  }).join('')+`<tr><td colspan="6" class="label-strong">Total</td><td class="label-strong" style="text-align:right">0.097%</td></tr>`;
+/* ---------- By Device ---------- */
+function renderByDevice(rows){
+  const chgMap = {'Mobile':+4.3,'Web':-1.8,'Uncategorized':+0.2};
+  const sh = shareByCategory(rows, r=>r.device, DEVICES);
+  const order = ['Mobile','Web','Uncategorized'];
+  const data = order.map(n=>{
+    const it = sh.find(x=>x.label===n) || {value:0};
+    return {label:n, value:it.value, display:fmtPct(it.value,2), chg: chgMap[n]||0};
+  });
+  renderHBar('bar_device', data, {axisTicks:['0,0%','0,1%','0,2%','0,3%','0,4%']});
 }
 
-/* ================= MAIN TREND CHART (Chart.js) ================= */
-let chartTrend;
-function renderTrend(){
-  const {labels,ms,mtv,vni}=buildTrendData();
-  const ctx=document.getElementById('chartTrend').getContext('2d');
-  if(chartTrend) chartTrend.destroy();
-  chartTrend=new Chart(ctx,{
-    type:'bar',
-    data:{labels,datasets:[
-      {type:'bar',label:'MarketShare',data:ms,backgroundColor:'#60a5fa',yAxisID:'yL',datalabels:true,borderRadius:2,order:3},
-      {type:'line',label:'Market Trading Value',data:mtv,borderColor:'#0a2756',backgroundColor:'rgba(10,39,86,.08)',tension:.35,yAxisID:'yR',pointRadius:3,pointBackgroundColor:'#0a2756',fill:false,order:1},
-      {type:'line',label:'VNINDEX',data:vni,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',tension:.35,yAxisID:'yR',pointRadius:2,pointBackgroundColor:'#f59e0b',borderDash:[4,3],fill:false,order:2}
-    ]},
+/* ---------- By Branches ---------- */
+function renderByBranch(rows){
+  const chgMap = {'TTKD 06':+8.5,'TTKD 1':+3.2,'CN Chợ Lớn':-1.5,'TTKD Nam HN':+2.1,'TTKD 3':-0.8,'CN Bình Dương':+0.4,
+                  'TTKD 06 HN':+1.0,'CN Đồng Nai':-0.2,'CN Đà Nẵng':+0.3,'TT GD Online':+0.1,'CN Vũng Tàu':-0.1,
+                  'KH Định Chế':0.0,'P.KH Cao Cấp':+0.2};
+  const sh = shareByCategory(rows, r=>r.branch_name, BRANCHES);
+  // Sorted descending by value
+  sh.sort((a,b)=>b.value-a.value);
+  const data = sh.map(it=>({label:it.label, value:it.value, display:fmtPct(it.value,2), chg: chgMap[it.label]||0}));
+  renderHBar('bar_branch', data, {axisTicks:['0,0%','0,2%','0,4%']});
+}
+
+/* ---------- By Nav Range ---------- */
+function renderByNav(rows){
+  const chgMap = {
+    '01. Rất nhỏ (0 – 10 tr)': 0.0,
+    '02. Đại chúng (10 – 100 tr)': +0.2,
+    '03. NĐT tích cực (100 – 500 tr)': -1.5,
+    '04. KH khá giả (500 tr – 1 tỷ)': +2.0,
+    '05. KH giàu / cao cấp (1 – 5 tỷ)': +3.5,
+    '06. KH giá trị tài sản cao (5 – 20 tỷ)': +4.8,
+    '07. KH siêu giàu (>= 20 tỷ)': +9.2
+  };
+  const sh = shareByCategory(rows, r=>r.nav_segment, NAV_SEGS);
+  const data = sh.map(it=>({label:it.label, value:it.value, display:fmtPct(it.value,2), chg: chgMap[it.label]||0}));
+  renderHBar('bar_nav', data, {axisTicks:['0,00%','0,15%','0,30%','0,45%','0,60%']});
+}
+
+/* ---------- By Active Trading Level ---------- */
+function renderByActive(rows){
+  const chgMap = {
+    'A. Acitve High':+6.5,
+    'B. Active Mid':+1.2,
+    'C.Active Low':-2.1,
+    'D. Dormant < 3 tháng':-0.9,
+    'E. Dormant > 3 tháng':+0.3
+  };
+  const sh = shareByCategory(rows, r=>r.active_level, ACTIVE_LEVELS);
+  // Custom order per PDF: A, B, C, E, D
+  const order = ['A. Acitve High','B. Active Mid','C.Active Low','E. Dormant > 3 tháng','D. Dormant < 3 tháng'];
+  const data = order.map(n=>{
+    const it = sh.find(x=>x.label===n) || {value:0};
+    return {label:n, value:it.value, display:fmtPct(it.value,2), chg: chgMap[n]||0};
+  });
+  renderHBar('bar_active', data, {axisTicks:['0,0%','0,2%','0,4%','0,6%']});
+}
+
+/* ---------- Donut Chart (By Order Placement Method) ---------- */
+let donutChart;
+function renderDonut(rows){
+  const g = groupBy(rows, r=>r.order_placement, r=>r.buy_value+r.sell_value);
+  const tot = [...g.values()].reduce((a,b)=>a+b,0);
+  const self  = g.get('Khách hàng tự đặt lệnh') || 0;
+  const broker= g.get('Môi giới đặt lệnh dùm') || 0;
+  const selfShare   = tot>0 ? (self/tot)  * TGT_MS_CUR * SCALE : 0;
+  const brokerShare = tot>0 ? (broker/tot)* TGT_MS_CUR * SCALE : 0;
+  const selfPct   = tot>0 ? self/tot  : 0;
+  const brokerPct = tot>0 ? broker/tot: 0;
+  const colors = ['#1e3a5f','#f59e0b'];
+
+  const ctx = document.getElementById('donutOrder').getContext('2d');
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels:['Khách hàng tự đặt lệnh','Môi giới đặt lệnh dùm'],
+      datasets:[{data:[self,broker], backgroundColor:colors, borderWidth:2, borderColor:'#fff'}]
+    },
     options:{
-      responsive:true,maintainAspectRatio:false,
+      responsive:true, maintainAspectRatio:false, cutout:'60%',
+      plugins:{ legend:{display:false}, tooltip:{enabled:true} }
+    }
+  });
+
+  document.getElementById('donutOrderLegend').innerHTML = `
+    <div class="lg"><span class="sw" style="background:${colors[0]}"></span>
+      <div><b>Khách hàng tự đặt lệnh</b><br>${fmtPct(selfShare,2)} (${(selfPct*100).toFixed(0)}%)</div></div>
+    <div class="lg"><span class="sw" style="background:${colors[1]}"></span>
+      <div><b>Môi giới đặt lệnh dùm</b><br>${fmtPct(brokerShare,2)} (${(brokerPct*100).toFixed(0)}%)</div></div>
+  `;
+}
+
+/* ---------- Heatmap coloring helper ---------- */
+function heatColor(v, max){
+  if (!max||!isFinite(max)) return '#fff';
+  const t = Math.min(1, Math.max(0, v/max));
+  // Blue scale
+  const r = Math.round(230 - 190*t);
+  const g = Math.round(240 - 170*t);
+  const b = Math.round(252 - 60*t);
+  return `rgb(${r},${g},${b})`;
+}
+
+/* ---------- Heatmap: Market Share by Weekday & Week ---------- */
+function renderHeatWeek(rows){
+  // Build pivoted table: Week rows x Weekday cols
+  const weekdays = ['1.Mon','2.Tue','3.Wed','4.Thu','5.Fri'];
+  // Use PDF week labels (9W.Feb .. 17W.Apr) with approximate share values (×1.8)
+  const weeks = [
+    {label:'09W.Feb| 21/2-27/2', vals:[1.11,1.17,1.11,1.31,0.75]},
+    {label:'10W.Feb| 28/2-6/3',  vals:[1.38,0.96,1.03,1.19,0.81]},
+    {label:'11W.Mar| 7/3-13/3',  vals:[1.12,0.75,0.73,1.16,0.99]},
+    {label:'12W.Mar| 14/3-20/3', vals:[0.84,1.18,0.69,0.94,0.77]},
+    {label:'13W.Mar| 21/3-27/3', vals:[0.84,0.85,0.91,0.77,1.43]},
+    {label:'14W.Mar| 28/3-3/4',  vals:[1.04,0.83,0.74,0.80,0.90]},
+    {label:'15W.Apr| 4/4-10/4',  vals:[0.72,1.06,1.04,1.01,1.04]},
+    {label:'16W.Apr| 11/4-17/4', vals:[0.99,0.79,0.82,0.87,0.93]},
+    {label:'17W.Apr| 18/4-24/4', vals:[0.98,null,null,null,null]}
+  ];
+  // Scale: PDF values × 1.8
+  const scaled = weeks.map(w=>({label:w.label, vals:w.vals.map(v=> v===null?null : v*SCALE)}));
+  const all = scaled.flatMap(w=>w.vals).filter(v=>v!==null);
+  const max = Math.max(...all);
+
+  let html = '<thead><tr><th style="text-align:left">Week</th>';
+  weekdays.forEach(wd=>html+=`<th>${wd}</th>`); html+='</tr></thead><tbody>';
+  scaled.forEach(w=>{
+    html += `<tr><td class="lbl">${w.label}</td>`;
+    w.vals.forEach(v=>{
+      if (v===null) html += `<td style="background:#f9fafb"></td>`;
+      else html += `<td style="background:${heatColor(v,max)}">${fmtPct(v/100,2)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('heat_week').innerHTML = html;
+}
+
+/* ---------- Heatmap: Trading Platform x Device ---------- */
+function renderHeatPlatDev(rows){
+  // PDF values ×1.8
+  const table = [
+    {lbl:'01.Mobile', vals:{'1.YSFlex':0.27, '2.YSwinner':0.04}},
+    {lbl:'02.Web',    vals:{'1.YSFlex':0.18, '2.YSwinner':0.08}}
+  ];
+  const scaled = table.map(r=>({lbl:r.lbl, vals:Object.fromEntries(Object.entries(r.vals).map(([k,v])=>[k,v*SCALE]))}));
+  const all = scaled.flatMap(r=>Object.values(r.vals));
+  const max = Math.max(...all);
+  let html = '<thead><tr><th style="text-align:left">Device</th><th>1.YSFlex</th><th>2.YSwinner</th></tr></thead><tbody>';
+  scaled.forEach(r=>{
+    html += `<tr><td class="lbl">${r.lbl}</td>`;
+    ['1.YSFlex','2.YSwinner'].forEach(p=>{
+      const v = r.vals[p];
+      html += `<td style="background:${heatColor(v,max)}">${fmtPct(v/100,2)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('heat_platdev').innerHTML = html;
+}
+
+/* ---------- Heatmap: Gen x Trading Platform ---------- */
+function renderHeatGen(rows){
+  const cols = ['YSFlex Android','YSFlex IOS','YSFlex Web','YSwinner Mobile','YSwinner Web'];
+  const table = [
+    {lbl:' 1. Gen Z (1997-2012)', vals:[0.00,0.01,0.01,0.00,0.02]},
+    {lbl:' 2. Gen Y (1981-1996)', vals:[0.03,0.13,0.06,0.02,0.02]},
+    {lbl:' 3. Gen X (1965 - 1980)', vals:[0.01,0.05,0.08,0.01,0.03]},
+    {lbl:' 4. Gen W (1946-1964)', vals:[0.00,0.01,0.03,0.00,0.02]}
+  ];
+  const scaled = table.map(r=>({lbl:r.lbl, vals:r.vals.map(v=>v*SCALE)}));
+  const max = Math.max(...scaled.flatMap(r=>r.vals));
+  let html = '<thead><tr><th style="text-align:left">gen</th>';
+  cols.forEach(c=>html+=`<th>${c}</th>`); html+='</tr></thead><tbody>';
+  scaled.forEach(r=>{
+    html += `<tr><td class="lbl">${r.lbl}</td>`;
+    r.vals.forEach(v=>{
+      html += `<td style="background:${heatColor(v,max)}">${fmtPct(v/100,2)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('heat_gen').innerHTML = html;
+}
+
+/* ---------- Heatmap: Nav Segment x Trading Platform ---------- */
+function renderHeatNavPlat(rows){
+  const cols = ['YSFlex Android','YSFlex IOS','YSFlex Web','YSwinner Mobile','YSwinner Web'];
+  const table = [
+    {lbl:' 01. Rất nhỏ (0 – 10 tr)',             vals:[0.00,0.00,0.00,0.00,0.00]},
+    {lbl:' 02. Đại chúng (10 – 100 tr)',         vals:[0.00,0.00,0.00,0.00,0.00]},
+    {lbl:' 03. NĐT tích cực (100 – 500 tr)',     vals:[0.01,0.02,0.00,0.01,0.01]},
+    {lbl:' 04. KH khá giả (500 tr – 1 tỷ)',      vals:[0.00,0.02,0.01,0.00,0.00]},
+    {lbl:' 05. KH giàu / cao cấp (1 – 5 tỷ)',    vals:[0.01,0.07,0.02,0.01,0.03]},
+    {lbl:' 06. KH giá trị tài sản cao (5 – 20 tỷ)', vals:[0.01,0.03,0.04,0.00,0.02]},
+    {lbl:' 07. KH siêu giàu (>= 20 tỷ)',         vals:[0.00,0.07,0.12,0.00,0.02]}
+  ];
+  const scaled = table.map(r=>({lbl:r.lbl, vals:r.vals.map(v=>v*SCALE)}));
+  const max = Math.max(...scaled.flatMap(r=>r.vals));
+  let html = '<thead><tr><th style="text-align:left">nav_name_withnb</th>';
+  cols.forEach(c=>html+=`<th>${c}</th>`); html+='</tr></thead><tbody>';
+  scaled.forEach(r=>{
+    html += `<tr><td class="lbl">${r.lbl}</td>`;
+    r.vals.forEach(v=>{
+      html += `<td style="background:${heatColor(v,max)}">${fmtPct(v/100,2)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  document.getElementById('heat_navplat').innerHTML = html;
+}
+
+/* ---------- Table: TOP 10 Brokers ---------- */
+function renderTopBrokers(rows){
+  // PDF data (masked + scaled)
+  const raw = [
+    {trader:'Môi giới 01', branch:'TTKD 06',       pos:'Cộng Tác Viên',               ms:0.14, chg:0.18},
+    {trader:'Môi giới 02', branch:'TTKD 06',       pos:'Cộng Tác Viên',               ms:0.05, chg:0.00},
+    {trader:'Môi giới 03', branch:'TTKD 1',        pos:'Trưởng Phòng Kinh Doanh',     ms:0.05, chg:0.06},
+    {trader:'Môi giới 04', branch:'TTKD Nam HN',   pos:'Chuyên Viên Kinh Doanh',      ms:0.03, chg:0.02},
+    {trader:'Môi giới 05', branch:'CN Bình Dương', pos:'Chuyên viên môi giới',        ms:0.02, chg:0.01},
+    {trader:'Môi giới 06', branch:'CN Chợ Lớn',    pos:'Chuyên viên môi giới',        ms:0.02, chg:0.00},
+    {trader:'Môi giới 07', branch:'CN Chợ Lớn',    pos:'Chuyên Viên Tư Vấn Đầu Tư',   ms:0.02, chg:0.02},
+    {trader:'Môi giới 08', branch:'TTKD 3',        pos:'Chuyên viên môi giới',        ms:0.02, chg:0.01},
+    {trader:'Môi giới 09', branch:'TTKD Nam HN',   pos:'Cộng Tác Viên',               ms:0.02, chg:0.07},
+    {trader:'Môi giới 03', branch:'TTKD 1',        pos:'Giám Đốc Kinh Doanh',         ms:0.02, chg:0.01},
+    {trader:'Môi giới 01', branch:'TTKD 06 HN',    pos:'Cộng Tác Viên',               ms:0.00, chg:0.00}
+  ];
+  // Optionally filter by selected traders/branches
+  const tset = STATE.traders, bset = STATE.branches;
+  let filtered = raw;
+  if (tset.size>0) filtered = filtered.filter(r=>tset.has(r.trader));
+  if (bset.size>0) filtered = filtered.filter(r=>bset.has(r.branch));
+
+  const scaled = filtered.map(r=>({...r, ms:r.ms*SCALE, chg:r.chg*SCALE}));
+  const totMs = scaled.reduce((a,b)=>a+b.ms,0);
+  const totChg = scaled.reduce((a,b)=>a+b.chg,0);
+
+  let html = `<thead><tr>
+    <th>trader_name</th><th>Branch Name</th><th>Position</th>
+    <th class="num">Market Share</th><th class="num">%Change</th>
+  </tr></thead><tbody>`;
+  scaled.forEach(r=>{
+    html += `<tr>
+      <td>${r.trader}</td><td>${r.branch}</td><td>${r.pos}</td>
+      <td class="num">${fmtPct(r.ms/100,2)}</td>
+      <td class="num ${signCls(r.chg)}">${fmtChg(r.chg)}</td>
+    </tr>`;
+  });
+  html += `<tr class="totalrow">
+    <td colspan="3">Tổng</td>
+    <td class="num">${fmtPct(totMs/100,2)}</td>
+    <td class="num ${signCls(totChg)}">${fmtChg(totChg)}</td>
+  </tr></tbody>`;
+  document.getElementById('tbl_top_brokers').innerHTML = html;
+}
+
+/* ---------- Table: BOTTOM 10 Brokers ---------- */
+function renderBotBrokers(rows){
+  const raw = [
+    {trader:'Môi giới 04', branch:'CN Đà Nẵng',   pos:'Cộng Tác Viên',              ms:0.0000053, chg:0.00},
+    {trader:'Môi giới 05', branch:'TTKD 1',       pos:'Cộng Tác Viên',              ms:0.0000036, chg:0.00},
+    {trader:'Môi giới 06', branch:'TTKD 06',      pos:'Chuyên Viên Kinh Doanh',     ms:0.0000032, chg:null},
+    {trader:'Môi giới 07', branch:'TTKD 1',       pos:'Chuyên Viên Kinh Doanh',     ms:0.0000021, chg:0.00},
+    {trader:'Môi giới 08', branch:'TTKD 3',       pos:'Chuyên Viên Tư Vấn Đầu Tư',  ms:0.0000017, chg:0.01},
+    {trader:'Môi giới 09', branch:'TTKD 06 HN',   pos:'Cộng Tác Viên',              ms:0.0000015, chg:null},
+    {trader:'Môi giới 01', branch:'TTKD 3',       pos:'Cộng Tác Viên',              ms:0.0000014, chg:0.00},
+    {trader:'Môi giới 02', branch:'TTKD 06',      pos:'Cộng Tác Viên',              ms:0.0000010, chg:null},
+    {trader:'Môi giới 03', branch:'TT GD Online', pos:'Cộng Tác Viên',              ms:0.0000002, chg:0.00},
+    {trader:'Môi giới 04', branch:'TTKD 1',       pos:'Cộng Tác Viên',              ms:0.0000002, chg:null}
+  ];
+  const scaled = raw.map(r=>({...r, ms:r.ms*SCALE, chg: r.chg===null?null:r.chg*SCALE}));
+  const totMs = scaled.reduce((a,b)=>a+b.ms,0);
+  const totChg = scaled.reduce((a,b)=>a+(b.chg||0),0);
+
+  let html = `<thead><tr>
+    <th>trader_name</th><th>Branch Name</th><th>Position</th>
+    <th class="num">Market Share</th><th class="num">%Change</th>
+  </tr></thead><tbody>`;
+  scaled.forEach(r=>{
+    html += `<tr>
+      <td>${r.trader}</td><td>${r.branch}</td><td>${r.pos}</td>
+      <td class="num">${(r.ms*100).toFixed(7).replace('.',',')}%</td>
+      <td class="num ${r.chg===null?'':signCls(r.chg)}">${r.chg===null?'—':fmtChg(r.chg)}</td>
+    </tr>`;
+  });
+  html += `<tr class="totalrow">
+    <td colspan="3">Tổng</td>
+    <td class="num">${(totMs*100).toFixed(7).replace('.',',')}%</td>
+    <td class="num ${signCls(totChg)}">${fmtChg(totChg)}</td>
+  </tr></tbody>`;
+  document.getElementById('tbl_bot_brokers').innerHTML = html;
+}
+
+/* ---------- Table: TOP 10 Customers ---------- */
+function renderTopCustomers(rows){
+  const raw = [
+    {cust:'Khách hàng 01', open:'31/03/2025', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 01', branch:'TTKD 06',       ms:0.03, chg:-0.31},
+    {cust:'Khách hàng 02', open:'06/06/2025', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 01', branch:'TTKD 06',       ms:0.03, chg:0.85},
+    {cust:'Khách hàng 03', open:'07/03/2025', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 01', branch:'TTKD 06',       ms:0.03, chg:0.89},
+    {cust:'Khách hàng 04', open:'13/03/2025', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 04', branch:'TTKD Nam HN',   ms:0.02, chg:0.35},
+    {cust:'Khách hàng 05', open:'08/11/2023', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 06', branch:'CN Chợ Lớn',    ms:0.02, chg:5.92},
+    {cust:'Khách hàng 06', open:'12/02/2025', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 03', branch:'TTKD 1',        ms:0.02, chg:null},
+    {cust:'Khách hàng 07', open:'25/10/2010', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 05', branch:'CN Bình Dương', ms:0.02, chg:94.91},
+    {cust:'Khách hàng 08', open:'12/03/2026', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 01', branch:'TTKD 06',       ms:0.02, chg:-0.15},
+    {cust:'Khách hàng 09', open:'12/11/2025', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 08', branch:'TTKD 3',        ms:0.02, chg:null},
+    {cust:'Khách hàng 10', open:'02/10/2024', nav:'07. KH siêu giàu (>= 20 tỷ)',          trader:'Môi giới 02', branch:'TTKD 06',       ms:0.02, chg:null},
+    {cust:'Khách hàng 11', open:'19/05/2022', nav:'06. KH giá trị tài sản cao (5 – 20 tỷ)', trader:'Môi giới 09', branch:'CN Bình Dương', ms:0.00, chg:-0.83}
+  ];
+  const tset = STATE.traders, bset = STATE.branches;
+  let filtered = raw;
+  if (tset.size>0) filtered = filtered.filter(r=>tset.has(r.trader));
+  if (bset.size>0) filtered = filtered.filter(r=>bset.has(r.branch));
+
+  const scaled = filtered.map(r=>({...r, ms:r.ms*SCALE, chg: r.chg===null?null:r.chg*SCALE}));
+  const totMs = scaled.reduce((a,b)=>a+b.ms,0);
+  const totChg = scaled.reduce((a,b)=>a+(b.chg||0),0);
+
+  let html = `<thead><tr>
+    <th>CustomerName</th><th>Open Date</th><th>Nav Segment</th>
+    <th>Trader</th><th>Branch</th>
+    <th class="num">Market Share</th><th class="num">%Change</th>
+  </tr></thead><tbody>`;
+  scaled.forEach(r=>{
+    html += `<tr>
+      <td>${r.cust}</td><td>${r.open}</td><td>${r.nav}</td>
+      <td>${r.trader}</td><td>${r.branch}</td>
+      <td class="num">${fmtPct(r.ms/100,2)}</td>
+      <td class="num ${r.chg===null?'':signCls(r.chg)}">${r.chg===null?'—':r.chg.toFixed(2).replace('.',',')}</td>
+    </tr>`;
+  });
+  html += `<tr class="totalrow">
+    <td colspan="5">Tổng</td>
+    <td class="num">${fmtPct(totMs/100,2)}</td>
+    <td class="num ${signCls(totChg)}">${totChg.toFixed(2).replace('.',',')}</td>
+  </tr></tbody>`;
+  document.getElementById('tbl_top_cust').innerHTML = html;
+}
+
+/* =============================================================
+   MAIN COMBO CHART — Market Share & Market Trends in Vietnam
+   NOTE: Not filtered by "Tìm kiếm chi tiết".
+         Only "Tìm kiếm Ngày/Tuần/Tháng/Quý" drives x-axis grain.
+============================================================= */
+let comboChart;
+function buildTrendData(grain){
+  // Returns {labels, marketShare[], marketTradingValue[]}
+  // All values × 1.8
+  if (grain==='Tuần'){
+    // 12 recent weeks
+    const labels = [];
+    for(let i=12;i>=1;i--) labels.push(`W${17-i}.Apr`);
+    labels[labels.length-1]='17W.Apr';
+    const ms = [1.01,0.92,0.86,0.79,0.74,0.80,0.90,0.72,1.06,1.04,1.01,0.93].map(v=>v*SCALE);
+    const mtv = [1775,1710,1680,1700,1820,1675,1703,1776,1678,1801,1695,1770].map(v=>v*SCALE);
+    return {labels, ms, mtv};
+  }
+  if (grain==='Tháng'){
+    const labels = ['T5/25','T6/25','T7/25','T8/25','T9/25','T10/25','T11/25','T12/25','T1/26','T2/26','T3/26','T4/26'];
+    const ms = [0.84,0.88,0.91,0.87,0.83,0.79,0.86,0.92,0.95,0.82,0.88,0.79].map(v=>v*SCALE);
+    const mtv = [1820,1740,1680,1720,1790,1810,1760,1700,1650,1720,1780,1690].map(v=>v*SCALE);
+    return {labels, ms, mtv};
+  }
+  if (grain==='Quý'){
+    const labels = ['Q3/24','Q4/24','Q1/25','Q2/25','Q3/25','Q4/25','Q1/26','Q2/26'];
+    const ms = [0.76,0.82,0.88,0.85,0.83,0.89,0.84,0.81].map(v=>v*SCALE);
+    const mtv = [1650,1720,1780,1800,1690,1820,1740,1760].map(v=>v*SCALE);
+    return {labels, ms, mtv};
+  }
+  if (grain==='ALL' || grain==='Năm'){
+    const labels = ['2024','2025','2026'];
+    const ms = [0.80,0.86,0.82].map(v=>v*SCALE);
+    const mtv = [1700,1750,1720].map(v=>v*SCALE);
+    return {labels, ms, mtv};
+  }
+  // Default Ngày: 7 recent days (per spec)
+  const labels = ['08/04','09/04','10/04','13/04','14/04','15/04','16/04','17/04'].slice(-7);
+  // PDF values × 1.8 (approximated for 7 recent days)
+  const pdfMs = [1.04,1.01,1.04,0.99,0.79,0.82,0.87,0.93].slice(-7);
+  const pdfMtv= [1820,1675,1703,1776,1678,1801,1695,1770].slice(-7);
+  const ms = pdfMs.map(v=>v*SCALE);
+  const mtv = pdfMtv.map(v=>v*SCALE);
+  return {labels, ms, mtv};
+}
+
+function renderCombo(){
+  const grain = STATE.grain==='ALL' ? 'Ngày' : STATE.grain;
+  const {labels, ms, mtv} = buildTrendData(grain);
+  const ctx = document.getElementById('comboChart').getContext('2d');
+  if (comboChart) comboChart.destroy();
+
+  comboChart = new Chart(ctx,{
+    data:{
+      labels,
+      datasets:[
+        {
+          type:'bar', label:'Market Trading Value',
+          data: mtv, backgroundColor:'#bfdbfe', borderColor:'#60a5fa', borderWidth:1,
+          yAxisID:'y1', order:2,
+          datalabels:false
+        },
+        {
+          type:'line', label:'MarketShare', data: ms,
+          yAxisID:'y', borderColor:'#f59e0b', backgroundColor:'#f59e0b',
+          tension:0.3, pointRadius:4, pointHoverRadius:6, borderWidth:2.5,
+          order:1,
+        }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
       plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:(c)=>{if(c.dataset.label==='MarketShare')return 'MS: '+c.parsed.y.toFixed(2)+'%';return c.dataset.label+': '+c.parsed.y;}}}
+        legend:{position:'top', labels:{boxWidth:12, font:{size:10}}},
+        tooltip:{
+          callbacks:{
+            label:(ctx)=>{
+              if (ctx.dataset.type==='line') return `MarketShare: ${ctx.parsed.y.toFixed(2)}%`;
+              return `MTV: ${fmtNum(ctx.parsed.y,0)} tỷ`;
+            }
+          }
+        }
       },
       scales:{
-        x:{ticks:{font:{size:10},color:'#6b7280'},grid:{display:false}},
-        yL:{position:'left',min:0,max:Math.max(...ms)*1.4,ticks:{callback:v=>v.toFixed(1)+'%',font:{size:10},color:'#6b7280'},grid:{color:'#f1f5f9'}},
-        yR:{position:'right',grid:{display:false},ticks:{font:{size:10},color:'#6b7280'},title:{display:true,text:'MTV / VNINDEX',font:{size:9},color:'#6b7280'}}
-      },
-      animation:{duration:400}
-    },
-    plugins:[{
-      id:'barLabels',
-      afterDatasetsDraw(chart){
-        const {ctx,data}=chart;
-        ctx.save();
-        ctx.font='600 9px Segoe UI';
-        ctx.fillStyle='#0a2756';
-        ctx.textAlign='center';
-        const meta=chart.getDatasetMeta(0);
-        meta.data.forEach((bar,i)=>{ctx.fillText(data.datasets[0].data[i].toFixed(2)+'%',bar.x,bar.y-4);});
-        ctx.fillStyle='#0a2756';
-        const metaM=chart.getDatasetMeta(1);
-        metaM.data.forEach((pt,i)=>{ctx.fillText(data.datasets[1].data[i],pt.x,pt.y-6);});
-        ctx.restore();
+        x:{ticks:{font:{size:9.5}, maxRotation:45, minRotation:0}, grid:{display:false}},
+        y:{ position:'left', beginAtZero:true,
+          ticks:{callback:v=>v.toFixed(1)+'%', font:{size:9.5}},
+          title:{display:true, text:'Market Share', font:{size:10}}},
+        y1:{position:'right', beginAtZero:true, grid:{drawOnChartArea:false},
+          ticks:{callback:v=>fmtNum(v,0), font:{size:9.5}},
+          title:{display:true, text:'Market Trading Value', font:{size:10}}}
       }
-    }]
+    }
   });
 }
 
-/* ============ DONUT CHART: Order Placement Method ============ */
-let donut;
-function renderDonut(){
-  const ctx=document.getElementById('donutPlacement').getContext('2d');
-  if(donut) donut.destroy();
-  donut=new Chart(ctx,{
-    type:'doughnut',
-    data:{labels:['Khách hàng tự đặt lệnh (85%)','Môi giới đặt lệnh dùm (15%)'],datasets:[{data:[85,15],backgroundColor:['#60a5fa','#f59e0b'],borderWidth:2,borderColor:'#fff'}]},
-    options:{
-      cutout:'62%',
-      plugins:{legend:{display:false},tooltip:{enabled:true}},
-      responsive:true,maintainAspectRatio:false
-    },
-    plugins:[{
-      id:'donutLabels',
-      afterDraw(chart){
-        const {ctx}=chart;
-        ctx.save();
-        ctx.font='700 11px Segoe UI';
-        ctx.fillStyle='#0a2756';
-        ctx.textAlign='center';
-        const meta=chart.getDatasetMeta(0);
-        const arcs=meta.data;
-        if(arcs[0]){ctx.fillText('0.27% (85%)',arcs[0].x-40,arcs[0].y-6);}
-        if(arcs[1]){ctx.fillText('0.05% (15%)',arcs[1].x+30,arcs[1].y+20);}
-        ctx.restore();
-      }
-    }]
+/* =============================================================
+   FILTER UI (multi-select with "Select All")
+============================================================= */
+function buildMultiSelect(wrapId, btnId, lblId, panelId, options, stateSet, onChange){
+  const wrap = document.getElementById(wrapId);
+  const btn  = document.getElementById(btnId);
+  const lbl  = document.getElementById(lblId);
+  const panel= document.getElementById(panelId);
+
+  function render(){
+    panel.innerHTML = '';
+    const all = document.createElement('label');
+    all.innerHTML = `<input type="checkbox" ${stateSet.size===0?'checked':''}> <b>Select All</b>`;
+    all.querySelector('input').addEventListener('change', e=>{
+      if (e.target.checked){ stateSet.clear(); }
+      else { options.forEach(o=>stateSet.add(o)); }
+      render(); updateLabel(); onChange();
+    });
+    panel.appendChild(all);
+    const sep = document.createElement('div'); sep.className='multi-sep'; panel.appendChild(sep);
+    options.forEach(opt=>{
+      const l = document.createElement('label');
+      const checked = stateSet.size===0 || stateSet.has(opt);
+      l.innerHTML = `<input type="checkbox" ${checked?'checked':''}> ${opt}`;
+      l.querySelector('input').addEventListener('change', e=>{
+        // If all were selected (size===0 meant all), convert to explicit set when deselect starts
+        if (stateSet.size===0){
+          options.forEach(o=>stateSet.add(o));
+        }
+        if (e.target.checked) stateSet.add(opt); else stateSet.delete(opt);
+        if (stateSet.size===options.length) stateSet.clear();
+        render(); updateLabel(); onChange();
+      });
+      panel.appendChild(l);
+    });
+  }
+  function updateLabel(){
+    if (stateSet.size===0) lbl.textContent='Tất cả';
+    else if (stateSet.size===1) lbl.textContent = [...stateSet][0];
+    else lbl.textContent = `${stateSet.size} đã chọn`;
+  }
+  btn.addEventListener('click', e=>{
+    e.stopPropagation();
+    document.querySelectorAll('.multi-wrap.open').forEach(w=>{if(w!==wrap) w.classList.remove('open')});
+    wrap.classList.toggle('open');
   });
+  document.addEventListener('click', e=>{
+    if (!wrap.contains(e.target)) wrap.classList.remove('open');
+  });
+  render(); updateLabel();
+  wrap._rebuild = ()=>{render(); updateLabel();};
 }
 
-/* ================= KPI Filter Update ================= */
-function scale(v, factor){return v*factor;}
-function applyKPIFilters(){
-  // filter data
-  const year=document.getElementById('fYear').value;
-  const branch=document.getElementById('fBranch').value;
-  const trader=document.getElementById('fTrader').value;
-  let factor=1;
-  if(year!=='All') factor*=0.4;
-  if(branch!=='All') factor*=0.25;
-  if(trader!=='All') factor*=0.2;
-
-  const base={
-    ms:0.26, msPrev:0.33,
-    ysvn:135, ysvnPrev:163,
-    mkt:8606, mktPrev:8210,
-    net:-8,
-    actPct:0.33, actNum:385, totCust:38849,
-    orders:3279, buyPct:45,
-    buyVal:64, buyCust:254, buyOrd:1492,
-    sellVal:71, sellCust:227, sellOrd:1787
-  };
-  const f=factor;
-  document.getElementById('kMS').firstChild.textContent=(base.ms*f).toFixed(2)+'%';
-  document.getElementById('kMSPrev').textContent=(base.msPrev*f).toFixed(2)+'%';
-  document.getElementById('kYSVN').firstChild.textContent=Math.round(base.ysvn*f)+'bn';
-  document.getElementById('kYSVNPrev').textContent=Math.round(base.ysvnPrev*f)+'bn';
-  document.getElementById('kMKT').firstChild.textContent=Math.round(base.mkt*f).toLocaleString('en-US')+'bn';
-  document.getElementById('kMKTPrev').textContent=Math.round(base.mktPrev*f).toLocaleString('en-US')+'bn';
-  document.getElementById('kNet').textContent=Math.round(base.net*f)+'bn';
-  document.getElementById('kActPct').textContent=(base.actPct*f).toFixed(2)+'%';
-  document.getElementById('kActNum').textContent=Math.round(base.actNum*f).toLocaleString('en-US');
-  document.getElementById('kTotCust').textContent=Math.round(base.totCust*f).toLocaleString('en-US');
-  document.getElementById('kOrders').textContent=Math.round(base.orders*f).toLocaleString('en-US');
-  document.getElementById('kBuyVal').textContent=Math.round(base.buyVal*f)+'bn';
-  document.getElementById('kBuyCust').textContent=Math.round(base.buyCust*f).toLocaleString('en-US');
-  document.getElementById('kBuyOrd').textContent=Math.round(base.buyOrd*f).toLocaleString('en-US');
-  document.getElementById('kSellVal').textContent=Math.round(base.sellVal*f)+'bn';
-  document.getElementById('kSellCust').textContent=Math.round(base.sellCust*f).toLocaleString('en-US');
-  document.getElementById('kSellOrd').textContent=Math.round(base.sellOrd*f).toLocaleString('en-US');
+/* =============================================================
+   MASTER RENDER — call all components
+============================================================= */
+function renderAll(){
+  const rows = applyFilters();
+  renderKPIs(rows);
+  renderByCustomerType(rows);
+  renderByPlatform(rows);
+  renderByDevice(rows);
+  renderByBranch(rows);
+  renderByNav(rows);
+  renderByActive(rows);
+  renderDonut(rows);
+  renderHeatWeek(rows);
+  renderHeatPlatDev(rows);
+  renderHeatGen(rows);
+  renderHeatNavPlat(rows);
+  renderTopBrokers(rows);
+  renderBotBrokers(rows);
+  renderTopCustomers(rows);
+  renderCombo();
 }
 
-/* ================= Event wiring ================= */
-['fYear','fGran','fDetail','fBranch','fTrader'].forEach(id=>{
-  document.getElementById(id).addEventListener('change',()=>{
-    renderTrend(); applyKPIFilters();
+/* =============================================================
+   INIT
+============================================================= */
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Year filter
+  document.getElementById('f_year').addEventListener('change', e=>{
+    STATE.year = e.target.value; renderAll();
   });
+  // Grain filter — also rebuilds detail options
+  document.getElementById('f_grain').addEventListener('change', e=>{
+    STATE.grain = e.target.value;
+    STATE.details.clear();
+    buildDetailSelect();
+    renderAll();
+  });
+  buildDetailSelect();
+  buildMultiSelect('f_branch_wrap','f_branch_btn','f_branch_lbl','f_branch_panel',
+    BRANCHES, STATE.branches, renderAll);
+  buildMultiSelect('f_trader_wrap','f_trader_btn','f_trader_lbl','f_trader_panel',
+    TRADERS.map(t=>t.name), STATE.traders, renderAll);
+
+  renderAll();
 });
 
-/* ================= INIT ================= */
-renderCustType(); renderPlatform(); renderDevice(); renderBranch(); renderNav();
-renderBrokerTables(); renderCustomerTable();
-renderTrend(); renderDonut();
-applyKPIFilters();
+function buildDetailSelect(){
+  const opts = DETAIL_MAP[STATE.grain] || [];
+  buildMultiSelect('f_detail_wrap','f_detail_btn','f_detail_lbl','f_detail_panel',
+    opts, STATE.details, renderAll);
+}
 </script>
 </body>
 </html>
