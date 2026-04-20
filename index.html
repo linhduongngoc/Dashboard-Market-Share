@@ -64,9 +64,14 @@
   .heat{background:linear-gradient(to right,rgba(37,99,235,var(--a,.1)),rgba(37,99,235,var(--a,.1)))}
   .bar-cell{position:relative}
   .bar-inner{height:10px;background:var(--bluebar);border-radius:1px;display:inline-block;vertical-align:middle}
-  .bar-row{display:grid;grid-template-columns:140px 1fr 50px;gap:6px;align-items:center;font-size:10px;padding:1px 0}
+  .bar-row{display:grid;grid-template-columns:140px 1fr 96px;gap:6px;align-items:center;font-size:10px;padding:1px 0}
   .bar-row .lbl{color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .bar-row .val{text-align:right;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
+  .bar-row .val-line{display:flex;align-items:center;justify-content:flex-end;gap:4px;white-space:nowrap}
+  .bar-row .chg{font-size:9px;font-weight:700}
+  .bar-row .chg.up{color:var(--pos)}
+  .bar-row .chg.down{color:var(--neg)}
+  .bar-row .chg.flat{color:var(--muted)}
   .bar-row .bar{background:#eef2f7;height:12px;border-radius:1px;overflow:hidden}
   .bar-row .bar>div{height:100%;background:var(--bluebar)}
   .disclaimer{background:#1f2f46;border:1px solid #2b3f5f;border-left:4px solid #f59e0b;padding:8px 10px;margin-top:8px;font-size:10.5px;color:#e5e7eb}
@@ -460,15 +465,28 @@ function buildTrendData(){
 /* =====================================================================
    BAR helpers (horizontal bar rows with labels)
 ===================================================================== */
+function calcPctChange(curr, prev){
+  if(prev===0 && curr===0) return {cls:'flat', text:'0.0%'};
+  if(prev===0) return {cls:'up', text:'New'};
+  const chg=((curr-prev)/prev)*100;
+  if(Math.abs(chg)<0.05) return {cls:'flat', text:'0.0%'};
+  return {
+    cls: chg>0 ? 'up' : 'down',
+    text: `${chg>0?'↑':'↓'}${Math.abs(chg).toFixed(1)}%`
+  };
+}
+
 function renderBars(containerId, items, fmt, maxOverride){
   const c=document.getElementById(containerId);
   c.innerHTML='';
   const max=maxOverride||Math.max(...items.map(i=>i.v));
   items.forEach(it=>{
     const w=max>0?(it.v/max*100):0;
+    const prev = Object.prototype.hasOwnProperty.call(it,'prev') ? it.prev : it.v;
+    const change = calcPctChange(it.v, prev);
     const div=document.createElement('div');
     div.className='bar-row';
-    div.innerHTML=`<div class="lbl" title="${it.l}">${it.l}</div><div class="bar"><div style="width:${w}%"></div></div><div class="val">${fmt(it.v)}</div>`;
+    div.innerHTML=`<div class="lbl" title="${it.l}">${it.l}</div><div class="bar"><div style="width:${w}%"></div></div><div class="val"><div class="val-line"><span>${fmt(it.v)}</span><span class="chg ${change.cls}">${change.text}</span></div></div>`;
     c.appendChild(div);
   });
 }
@@ -478,52 +496,52 @@ function renderBars(containerId, items, fmt, maxOverride){
 ===================================================================== */
 function renderCustType(){
   renderBars('barCustType', [
-    {l:'01.Cá nhân trong nước',v:0.30},
-    {l:'02.Tổ chức trong nước',v:0.007},
-    {l:'03.Nhà đầu tư nước ngoài',v:0.007},
+    {l:'01.Cá nhân trong nước',v:0.30,prev:0.28},
+    {l:'02.Tổ chức trong nước',v:0.007,prev:0.009},
+    {l:'03.Nhà đầu tư nước ngoài',v:0.007,prev:0.006},
   ], v=>v.toFixed(2)+'%', 0.32);
 }
 function renderPlatform(){
   renderBars('barPlatform', [
-    {l:'3.YSInvest',v:0.00},
-    {l:'2.YSwinner',v:0.04},
-    {l:'4.Uncategorized',v:0.08},
-    {l:'1.YSFlex',v:0.20},
+    {l:'3.YSInvest',v:0.00,prev:0.01},
+    {l:'2.YSwinner',v:0.04,prev:0.03},
+    {l:'4.Uncategorized',v:0.08,prev:0.09},
+    {l:'1.YSFlex',v:0.20,prev:0.17},
   ], v=>v.toFixed(2)+'%', 0.22);
 }
 function renderDevice(){
   renderBars('barDevice', [
-    {l:'Mobile',v:0.12},
-    {l:'Web',v:0.11},
-    {l:'Uncategorized',v:0.08},
+    {l:'Mobile',v:0.12,prev:0.10},
+    {l:'Web',v:0.11,prev:0.12},
+    {l:'Uncategorized',v:0.08,prev:0.07},
   ], v=>v.toFixed(2)+'%', 0.14);
 }
 function renderBranch(){
   renderBars('barBranch', [
-    {l:'TTKD 06',v:0.093},
-    {l:'TTKD 1',v:0.037},
-    {l:'TTKD Nam HN',v:0.030},
-    {l:'TTKD 06 HN',v:0.030},
-    {l:'CN Chợ Lớn',v:0.030},
-    {l:'P.KH Cao Cấp',v:0.030},
-    {l:'CN Bình Dương',v:0.017},
-    {l:'TTKD 3',v:0.017},
-    {l:'CN Đà Nẵng',v:0.010},
-    {l:'CN Đồng Nai',v:0.007},
-    {l:'TT GD Online',v:0.007},
-    {l:'CN Vũng Tàu',v:0.007},
-    {l:'KH Định Chế',v:0.003},
+    {l:'TTKD 06',v:0.093,prev:0.088},
+    {l:'TTKD 1',v:0.037,prev:0.040},
+    {l:'TTKD Nam HN',v:0.030,prev:0.028},
+    {l:'TTKD 06 HN',v:0.030,prev:0.025},
+    {l:'CN Chợ Lớn',v:0.030,prev:0.032},
+    {l:'P.KH Cao Cấp',v:0.030,prev:0.027},
+    {l:'CN Bình Dương',v:0.017,prev:0.015},
+    {l:'TTKD 3',v:0.017,prev:0.019},
+    {l:'CN Đà Nẵng',v:0.010,prev:0.009},
+    {l:'CN Đồng Nai',v:0.007,prev:0.008},
+    {l:'TT GD Online',v:0.007,prev:0.006},
+    {l:'CN Vũng Tàu',v:0.007,prev:0.005},
+    {l:'KH Định Chế',v:0.003,prev:0.004},
   ], v=>v.toFixed(3)+'%', 0.10);
 }
 function renderNav(){
   renderBars('barNav', [
-    {l:'01. Rất nhỏ (0 – 10 tr)',v:0.000},
-    {l:'02. Đại chúng (10 – 100 tr)',v:0.003},
-    {l:'03. NĐT tích cực (100 – 500 tr)',v:0.020},
-    {l:'04. KH khá giả (500 tr – 1 tỷ)',v:0.013},
-    {l:'05. KH giàu / cao cấp (1 – 5 tỷ)',v:0.057},
-    {l:'06. KH giá trị tài sản cao (5 – 20 tỷ)',v:0.040},
-    {l:'07. KH siêu giàu (>= 20 tỷ)',v:0.120},
+    {l:'01. Rất nhỏ (0 – 10 tr)',v:0.000,prev:0.000},
+    {l:'02. Đại chúng (10 – 100 tr)',v:0.003,prev:0.002},
+    {l:'03. NĐT tích cực (100 – 500 tr)',v:0.020,prev:0.018},
+    {l:'04. KH khá giả (500 tr – 1 tỷ)',v:0.013,prev:0.011},
+    {l:'05. KH giàu / cao cấp (1 – 5 tỷ)',v:0.057,prev:0.051},
+    {l:'06. KH giá trị tài sản cao (5 – 20 tỷ)',v:0.040,prev:0.044},
+    {l:'07. KH siêu giàu (>= 20 tỷ)',v:0.120,prev:0.110},
   ], v=>v.toFixed(3)+'%', 0.13);
 }
 
